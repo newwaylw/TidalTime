@@ -1,0 +1,4 @@
+[DEFAULT]
+Webhook = https://hooks.slack.com/xxx
+Database = /path/to/xxx.db
+Threshold = 0.6

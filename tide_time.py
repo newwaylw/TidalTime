@@ -40,6 +40,7 @@ class Tidal:
     def drop_table(self):
         sql = f"DROP TABLE {Tidal.TABLE_NAME};"
         self.cursor.execute(sql)
+        self.con.commit()
 
     def insert(self, tide_record: TideRecord):
         insert_sql = f"INSERT INTO {Tidal.TABLE_NAME} " \
