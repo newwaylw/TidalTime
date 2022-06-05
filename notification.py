@@ -59,6 +59,7 @@ class Notification:
 if __name__ == '__main__':
     n = Notification('slack.cfg')
     r = n.query_low()
+    log.debug(f"{len(r)} record(s) found")
     for record in r:
         d = record[0]
         port_id = record[1]
