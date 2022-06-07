@@ -4,6 +4,7 @@ from datetime import datetime
 import logging as log
 import requests
 import time
+import click
 
 log.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                 datefmt='%d-%m-%Y:%H:%M:%S', level=log.DEBUG)
@@ -54,10 +55,11 @@ class Notification:
             else:
                 log.debug(f"HTTP POST successful: {r.status_code} {r.reason}")
                 sent = True
-
-
-if __name__ == '__main__':
-    n = Notification('slack.cfg')
+@click.command()
+@click.option('-c', '--config-file', default='config.cfg',
+              help='path to config file')
+def main(config_file):
+    n = Notification(config_file)
     r = n.query_low()
     log.debug(f"{len(r)} record(s) found")
     for record in r:
@@ -68,3 +70,5 @@ if __name__ == '__main__':
         tide_timezone = record[4]
         height = record[5]
         n.send_msg(d, port_id, tide_type, tide_time, tide_timezone, height)
+if __name__ == '__main__':
+    main()

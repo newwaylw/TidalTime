@@ -8,6 +8,7 @@ from datetime import datetime
 from tide_record import TideRecord
 import logging as log
 import random
+import configparser
 
 log.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                 datefmt='%d-%m-%Y:%H:%M:%S', level=log.DEBUG)
@@ -24,10 +25,12 @@ class Tidal:
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36',
     ]
 
-    def __init__(self, db_name):
-        self.con = sqlite3.connect(db_name)
-        self.cursor = self.con.cursor()
+    def __init__(self, config_file):
+        self.config = configparser.ConfigParser()
+        self.config.read(config_file)
 
+        self.con = sqlite3.connect(self.config['DEFAULT']['Database'])
+        self.cursor = self.con.cursor()
         self.current_year = datetime.now().year
         self.current_month = datetime.now().month
         self.current_day = datetime.now().day
@@ -112,12 +115,14 @@ class Tidal:
 
 
 @click.command()
+@click.option('-c', '--config-file', default='config.cfg',
+              help='path to config file')
 @click.option('-a', '--area-id', default='9',
               help='area id')
 @click.option('-p', '--port-id', default='103',
               help='port id')
-def main(area_id, port_id):
-    t = Tidal("tidal.db")
+def main(config_file, area_id, port_id):
+    t = Tidal(config_file)
     tide_list = t.parse_record(area_id, port_id)
     for record in tide_list:
         t.insert(record)
