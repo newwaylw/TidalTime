@@ -9,6 +9,7 @@ from tide_record import TideRecord
 import logging as log
 import random
 import configparser
+import time
 
 log.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                 datefmt='%d-%m-%Y:%H:%M:%S', level=log.DEBUG)
@@ -16,7 +17,8 @@ log.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(li
 
 class Tidal:
     BASE_URL = "https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/"
-    TABLE_NAME = 'tidal'
+    TIDE_TABLE = 'tidal'
+    LOCATION_TABLE = 'location'
     USER_AGENT_LIST = [
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0',
@@ -35,14 +37,15 @@ class Tidal:
         self.current_month = datetime.now().month
         self.current_day = datetime.now().day
         self.create_table()
+        self.port_id_2_region_map = {item[0]: item[1] for item in self.load_locations()}
 
-        self.headers = {
-            "Content-Type": "application/json; charset=utf-8",
-            "User-Agent": f"{random.choice(Tidal.USER_AGENT_LIST)}"
-        }
+    def load_locations(self):
+        sql = 'SELECT port_id, region_id FROM ' + Tidal.LOCATION_TABLE
+        self.cursor.execute(sql)
+        return self.cursor.fetchall()
 
     def create_table(self):
-        sql = 'CREATE TABLE IF NOT EXISTS ' + Tidal.TABLE_NAME + ' (' \
+        sql = 'CREATE TABLE IF NOT EXISTS ' + Tidal.TIDE_TABLE + ' (' \
               'date TEXT,' + \
               'port_id TEXT,' + \
               'tide_type TEXT,' + \
@@ -53,18 +56,18 @@ class Tidal:
 
         self.cursor.execute(sql)
         if self.cursor.rowcount <= 0:
-            log.info(f'Table "{Tidal.TABLE_NAME}" already existed. Skipping creation')
+            log.info(f'Table "{Tidal.TIDE_TABLE}" already existed. Skipping creation')
         else:
-            log.info(f'Table "{Tidal.TABLE_NAME}" created.')
+            log.info(f'Table "{Tidal.TIDE_TABLE}" created.')
         self.con.commit()
 
     def drop_table(self):
-        sql = f"DROP TABLE {Tidal.TABLE_NAME};"
+        sql = f"DROP TABLE {Tidal.TIDE_TABLE};"
         self.cursor.execute(sql)
         self.con.commit()
 
     def insert(self, tide_record: TideRecord):
-        insert_sql = f"INSERT INTO {Tidal.TABLE_NAME} " \
+        insert_sql = f"INSERT INTO {Tidal.TIDE_TABLE} " \
               f"(date, port_id, tide_type, tide_time, tide_timezone, height) " \
               f"VALUES(?,?,?,?,?,?) "
 
@@ -75,16 +78,26 @@ class Tidal:
                                              item.time,
                                              tide_record.timezone,
                                              item.height))
-        self.con.commit()
+
+    def close(self):
+        self.con.close()
+
+    def get_region(self, port_id):
+        return self.port_id_2_region_map[port_id]
+
+    def get_all_port_ids(self):
+        return self.port_id_2_region_map.keys()
 
     def parse_record(self, area_id, port_id):
-        location_code = area_id + '/' + port_id
+        location_code = str(area_id) + '/' + port_id
         url = Tidal.BASE_URL + location_code
         try:
             req = urllib.request.Request(
                 url,
                 data=None,
-                headers=self.headers
+                headers={"Content-Type": "application/json; charset=utf-8",
+                         "User-Agent": f"{random.choice(Tidal.USER_AGENT_LIST)}"
+                         }
             )
             html = urllib.request.urlopen(req)
 
@@ -113,20 +126,33 @@ class Tidal:
 
         return tide_record_list
 
+    def write(self, port_id):
+        area_id = self.get_region(port_id)
+        tide_list = self.parse_record(area_id, port_id)
+        log.debug(f"inserting records, port_id={port_id}, region_id={area_id}, no. record={len(tide_list)}")
+        for record in tide_list:
+            self.insert(record)
+        self.con.commit()
+
+    def write_all(self):
+        wait_interval = int(self.config['DEFAULT']['Interval'])
+        for port_id in self.get_all_port_ids():
+            self.write(port_id)
+            time.sleep(wait_interval)
+
 
 @click.command()
 @click.option('-c', '--config-file', default='config.cfg',
               help='path to config file')
-@click.option('-a', '--area-id', default='9',
-              help='area id')
-@click.option('-p', '--port-id', default='103',
-              help='port id')
-def main(config_file, area_id, port_id):
+@click.option('-p', '--port-id', multiple=True, help='port-ids to monitor')
+def main(config_file, port_id):
     t = Tidal(config_file)
-    tide_list = t.parse_record(area_id, port_id)
-    for record in tide_list:
-        t.insert(record)
-    t.cursor.close()
+    if port_id:
+        for pid in port_id:
+            t.write(pid)
+    else:
+        t.write_all()
+    t.close()
 
 
 # Press the green button in the gutter to run the script.
