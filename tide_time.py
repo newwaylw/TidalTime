@@ -39,11 +39,6 @@ class Tidal:
         self.create_table()
         self.port_id_2_region_map = {item[0]: item[1] for item in self.load_locations()}
 
-        self.headers = {
-            "Content-Type": "application/json; charset=utf-8",
-            "User-Agent": f"{random.choice(Tidal.USER_AGENT_LIST)}"
-        }
-
     def load_locations(self):
         sql = 'SELECT port_id, region_id FROM ' + Tidal.LOCATION_TABLE
         self.cursor.execute(sql)
@@ -100,7 +95,9 @@ class Tidal:
             req = urllib.request.Request(
                 url,
                 data=None,
-                headers=self.headers
+                headers={"Content-Type": "application/json; charset=utf-8",
+                         "User-Agent": f"{random.choice(Tidal.USER_AGENT_LIST)}"
+                         }
             )
             html = urllib.request.urlopen(req)
 
@@ -142,6 +139,7 @@ class Tidal:
         for port_id in self.get_all_port_ids():
             self.write(port_id)
             time.sleep(wait_interval)
+
 
 @click.command()
 @click.option('-c', '--config-file', default='config.cfg',
