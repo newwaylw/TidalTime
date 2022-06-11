@@ -57,19 +57,19 @@ class Notification:
         message = f'Spring {tide_type} tide {height}m at {location}: \n' + \
                   f'on: {date} at {tide_time} ({tide_timezone})'
         log.info(f"message = {message}")
-        # while not sent:
-        #     r = requests.post(self.config['DEFAULT']['Webhook'],
-        #                       json={'text': message})
-        #     cnt += 1
-        #     if not (r.status_code == 200 and r.reason == 'OK'):
-        #         log.debug(f"HTTP POST failed: {r.status_code} {r.reason}")
-        #         if cnt > 10:
-        #             log.debug(f"failed {cnt} times, quitting")
-        #             break
-        #         time.sleep(min(300, 2**cnt))
-        #     else:
-        #         log.debug(f"HTTP POST successful: {r.status_code} {r.reason}")
-        #         sent = True
+        while not sent:
+            r = requests.post(self.config['DEFAULT']['Webhook'],
+                              json={'text': message})
+            cnt += 1
+            if not (r.status_code == 200 and r.reason == 'OK'):
+                log.debug(f"HTTP POST failed: {r.status_code} {r.reason}")
+                if cnt > 10:
+                    log.debug(f"failed {cnt} times, quitting")
+                    break
+                time.sleep(min(300, 2**cnt))
+            else:
+                log.debug(f"HTTP POST successful: {r.status_code} {r.reason}")
+                sent = True
 
 
 @click.command()
