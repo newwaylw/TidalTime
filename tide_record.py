@@ -1,16 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import namedtuple
 
 class TideRecord:
-    def __init__(self, year: str, month: str, day: str, timezone: str, area_id:str, port_id: str):
-        self.datetime = datetime.strptime(f'{year} {month} {day}', '%Y %m %d')
+    def __init__(self, year: str, month: str, day: str, day_offset:int, timezone: str, area_id:str, port_id: str):
+        self.record_datetime = datetime.strptime(f'{year} {month} {day}', '%Y %m %d')
+        self.record_datetime += timedelta(days=day_offset)
         self.area_id = area_id
         self.port_id = port_id
         self.timezone = timezone
         self.data = []
 
     def get_date(self):
-        return self.datetime
+        return self.record_datetime
 
     def get_measurements(self):
         return self.data
@@ -20,7 +21,7 @@ class TideRecord:
         self.data.append(Tide(type, time, height))
 
     def __key(self):
-        return (self.datetime, self.timezone, self.port_id)
+        return self.record_datetime, self.timezone, self.port_id
 
     def __hash__(self):
         return hash(self.__key())
@@ -31,7 +32,8 @@ class TideRecord:
         return NotImplemented
 
 
-# a = TideRecord('2022', 'June', '1', 'BST', '103')
+a = TideRecord('2022', '6', '24', 7, 'BST', 9, '103')
+print(a)
 # b = TideRecord('2022', 'June', '1', 'UTC', '103')
 #
 # print(a==b)
