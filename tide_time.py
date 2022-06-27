@@ -106,7 +106,7 @@ class Tidal:
             tide_record_list = list()
             log.info(f"{len(tables)} days record found")
             # each table contains tide prediction for 1 day starting 'today'
-            for i, table in enumerate(tables):
+            for offset, table in enumerate(tables):
                 row_text = table.select_one("caption").text
                 types = [[td.text for td in row.find_all("th")] for row in table.select("tr")]
                 data = [[td.text for td in row.find_all("td")] for row in table.select("tr")[1:]]
@@ -115,7 +115,7 @@ class Tidal:
                 log.debug(f"{len(high_low)} {row_text}")
                 # BST or UTC ?
                 timezone = 'BST' if 'BST' in time else 'UTC'
-                t_record = TideRecord(self.current_year, self.current_month, self.current_day+i,
+                t_record = TideRecord(self.current_year, self.current_month, self.current_day, offset,
                                       timezone, area_id, port_id)
                 for type, item in zip(high_low, data):
                     height = float(item[1])
