@@ -154,7 +154,8 @@ class Tidal:
 @click.command()
 @click.option('-c', '--config-file', default='config.cfg',
               help='path to config file')
-@click.option('-p', '--port-id', multiple=True, help='port-ids to monitor')
+@click.option('-p', '--port-id', multiple=True,
+              help='port-ids to scrape, if not specified all available ports will be scraped.')
 def main(config_file, port_id):
     t = Tidal(config_file)
     if port_id:
