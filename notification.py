@@ -45,7 +45,7 @@ class Notification:
             self.cursor.execute(sql)
         else:
             sql += f"AND port_id in ({','.join(['?']*len(port_id_list))})"
-            log.debug(f'query = {sql}')
+            log.debug(f'query = {sql}, {port_id_list}')
             self.cursor.execute(sql, port_id_list)
         result = self.cursor.fetchall()
         return result

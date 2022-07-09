@@ -30,10 +30,3 @@ class TideRecord:
         if isinstance(other, TideRecord):
             return self.__key() == other.__key()
         return NotImplemented
-
-
-a = TideRecord('2022', '6', '24', 7, 'BST', 9, '103')
-print(a)
-# b = TideRecord('2022', 'June', '1', 'UTC', '103')
-#
-# print(a==b)
