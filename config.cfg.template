@@ -1,4 +1,4 @@
 [DEFAULT]
-Webhook = https://hooks.slack.com/xxx
-Database = /path/to/xxx.db
-Threshold = 0.6
+Webhook = https://hooks.slack.com/services/xxx
+Database = tidal.db
+Interval = 1
