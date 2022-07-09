@@ -1,5 +1,8 @@
 from bs4 import BeautifulSoup
 import urllib
+import http
+from tenacity import retry
+from tenacity import stop_after_attempt, wait_exponential
 from urllib.request import urlopen
 import urllib.request
 import sqlite3
@@ -88,9 +91,11 @@ class Tidal:
     def get_all_port_ids(self):
         return self.port_id_2_region_map.keys()
 
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=32))
     def parse_record(self, area_id, port_id):
         location_code = str(area_id) + '/' + port_id
         url = Tidal.BASE_URL + location_code
+        tide_record_list = list()
         try:
             req = urllib.request.Request(
                 url,
@@ -103,7 +108,6 @@ class Tidal:
 
             soup = BeautifulSoup(html, features="html.parser")
             tables = soup.select("table.wr-c-tide-extremes")
-            tide_record_list = list()
             log.info(f"{len(tables)} days record found")
             # each table contains tide prediction for 1 day starting 'today'
             for offset, table in enumerate(tables):
@@ -121,18 +125,24 @@ class Tidal:
                     height = float(item[1])
                     t_record.add_record(type, item[0], height)
                     tide_record_list.append(t_record)
-        except urllib.error.HTTPError:
+        except urllib.error.HTTPError as e:
             log.error(f"{url} not found")
-
+            raise e
+        except http.client.IncompleteRead as ine:
+            log.error(str(ine))
+            raise ine
         return tide_record_list
 
     def write(self, port_id):
         area_id = self.get_region(port_id)
         tide_list = self.parse_record(area_id, port_id)
-        log.debug(f"inserting records, port_id={port_id}, region_id={area_id}, no. record={len(tide_list)}")
-        for record in tide_list:
-            self.insert(record)
-        self.con.commit()
+        if len(tide_list) == 0:
+            log.warning("No record found, something is wrong with the url?")
+        else:
+            log.debug(f"inserting records, port_id={port_id}, region_id={area_id}, no. record={len(tide_list)}")
+            for record in tide_list:
+                self.insert(record)
+            self.con.commit()
 
     def write_all(self):
         wait_interval = int(self.config['DEFAULT']['Interval'])
