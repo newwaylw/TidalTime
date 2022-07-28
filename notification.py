@@ -76,7 +76,7 @@ class Notification:
 @click.option('-c', '--config-file', default='config.cfg',
               help='path to config file')
 @click.option('-p', '--port-id', multiple=True, help='port-ids to monitor')
-@click.option('-t', '--threshold', type=float, default=0.5,
+@click.option('-t', '--low-threshold', type=float, default=0.5,
               help='send notification when tide is lower than this')
 def main(config_file, port_id, threshold):
     n = Notification(config_file)

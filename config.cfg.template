@@ -1,4 +1,7 @@
 [DEFAULT]
+# slack webhook for sending notifications
 Webhook = https://hooks.slack.com/services/xxx
+# sqlite table location
 Database = tidal.db
-Interval = 1
+# how many seconds should we request tidal information of a location (port id)
+Interval = 5

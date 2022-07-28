@@ -32,8 +32,12 @@ class Tidal:
 
     def __init__(self, config_file):
         self.config = configparser.ConfigParser()
-        self.config.read(config_file)
-
+        try:
+            with open(config_file) as f:
+                self.config.read_file(f)
+        except IOError as e:
+            log.error(f"config file {config_file} not found!")
+            raise e
         self.con = sqlite3.connect(self.config['DEFAULT']['Database'])
         self.cursor = self.con.cursor()
         self.current_year = datetime.now().year
