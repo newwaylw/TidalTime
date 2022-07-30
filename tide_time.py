@@ -44,10 +44,17 @@ class Tidal:
         self.current_month = datetime.now().month
         self.current_day = datetime.now().day
         self.create_table()
-        self.port_id_2_region_map = {item[0]: item[1] for item in self.load_locations()}
+
+        self._port_id_2_region_map = {}
+        self._port_id_2_location_name = {}
+
+        for port_id, region, name in self.load_locations():
+            self._port_id_2_region_map[port_id] = region
+            self._port_id_2_location_name[port_id] = name
+
 
     def load_locations(self):
-        sql = 'SELECT port_id, region_id FROM ' + Tidal.LOCATION_TABLE
+        sql = 'SELECT port_id, region_id, name FROM ' + Tidal.LOCATION_TABLE
         self.cursor.execute(sql)
         return self.cursor.fetchall()
 
@@ -90,12 +97,15 @@ class Tidal:
         self.con.close()
 
     def get_region(self, port_id):
-        return self.port_id_2_region_map[port_id]
+        return self._port_id_2_region_map[port_id]
 
     def get_all_port_ids(self):
-        return self.port_id_2_region_map.keys()
+        return self._port_id_2_region_map.keys()
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=32))
+    def get_location_name(self, port_id):
+        return self._port_id_2_location_name[port_id]
+
+    @retry(stop=stop_after_attempt(1), wait=wait_exponential(multiplier=1, min=1, max=32))
     def parse_record(self, area_id, port_id):
         location_code = str(area_id) + '/' + port_id
         url = Tidal.BASE_URL + location_code
@@ -108,11 +118,11 @@ class Tidal:
                          "User-Agent": f"{random.choice(Tidal.USER_AGENT_LIST)}"
                          }
             )
-            html = urllib.request.urlopen(req)
 
+            html = urllib.request.urlopen(req)
             soup = BeautifulSoup(html, features="html.parser")
             tables = soup.select("table.wr-c-tide-extremes")
-            log.info(f"{len(tables)} days record found")
+            log.info(f"{len(tables)} days predictions found for {self.get_location_name(port_id)} (port_id={port_id})")
             # each table contains tide prediction for 1 day starting 'today'
             for offset, table in enumerate(tables):
                 row_text = table.select_one("caption").text
@@ -122,6 +132,7 @@ class Tidal:
                 high_low = [x[0] for x in types]
                 log.debug(f"{len(high_low)} {row_text}")
                 # BST or UTC ?
+                # TODO handle timezone consistency
                 timezone = 'BST' if 'BST' in time else 'UTC'
                 t_record = TideRecord(self.current_year, self.current_month, self.current_day, offset,
                                       timezone, area_id, port_id)
