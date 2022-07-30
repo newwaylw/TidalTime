@@ -138,21 +138,34 @@ class Tidal:
         return tide_record_list
 
     def write(self, port_id):
-        area_id = self.get_region(port_id)
-        tide_list = self.parse_record(area_id, port_id)
-        if len(tide_list) == 0:
-            log.warning("No record found, something is wrong with the url?")
-        else:
-            log.debug(f"inserting records, port_id={port_id}, region_id={area_id}, no. record={len(tide_list)}")
+        try:
+            area_id = self.get_region(port_id)
+            tide_list = self.parse_record(area_id, port_id)
+            if len(tide_list) == 0:
+                log.warning("No record found, something is wrong with the url?")
+            else:
+                log.debug(f"inserting records, port_id={port_id}, region_id={area_id}, no. record={len(tide_list)}")
+            
             for record in tide_list:
                 self.insert(record)
             self.con.commit()
+            return True
+        except: 
+            msg = f"parsing record for {port_id} tried {self.parse_record.retry.statistics['attempt_number']} times but failed"
+            log.error(msg)
+            return False
+
 
     def write_all(self):
+        count = 0
         wait_interval = int(self.config['DEFAULT']['Interval'])
         for port_id in self.get_all_port_ids():
-            self.write(port_id)
+            success = self.write(port_id)
+            if success:
+                count += 1
+                log.info(f"tide info for port id {port_id} saved.")
             time.sleep(wait_interval)
+        log.info(f"{count}/{len(self.get_all_port_ids())} saved.")
 
 
 @click.command()
