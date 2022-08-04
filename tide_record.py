@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 from collections import namedtuple
 
+
 class TideRecord:
-    def __init__(self, year: str, month: str, day: str, day_offset:int, timezone: str, area_id:str, port_id: str):
+    def __init__(self, year: int, month: int, day: int, day_offset: int, timezone: str, area_id: str, port_id: str):
         self.record_datetime = datetime.strptime(f'{year} {month} {day}', '%Y %m %d')
         self.record_datetime += timedelta(days=day_offset)
         self.area_id = area_id
