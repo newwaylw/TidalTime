@@ -35,7 +35,7 @@ class Tidal:
             with open(config_file) as f:
                 self.config.read_file(f)
         except IOError as e:
-            log.error(f"config file {config_file} not found!")
+            self.logging.error(f"config file {config_file} not found!")
             raise e
         self.con = sqlite3.connect(self.config['DEFAULT']['Database'])
         self.cursor = self.con.cursor()
@@ -104,6 +104,7 @@ class Tidal:
         return self._port_id_2_location_name[port_id]
 
     # retry 5 times in case of bad network connection
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=32))
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=32))
     def parse_record(self, area_id, port_id):
         location_code = str(area_id) + '/' + port_id

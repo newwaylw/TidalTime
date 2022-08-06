@@ -5,6 +5,8 @@ import logging as log
 import requests
 import time
 import click
+from tenacity import retry
+from tenacity import stop_after_attempt, wait_exponential
 
 log.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                 datefmt='%d-%m-%Y:%H:%M:%S', level=log.DEBUG)
@@ -50,26 +52,23 @@ class Notification:
         result = self.cursor.fetchall()
         return result
 
+    @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=1, max=32))
     def send_msg(self, date, port_id, tide_type, tide_time, tide_timezone, height):
         location = self.get_location_name(port_id)
-        sent = False
-        cnt = 0
+        day_of_week = datetime.strptime(date, '%Y-%m-%d').strftime('%A')
         message = f'Spring {tide_type} tide {height}m at {location}: \n' + \
-                  f'on: {date} at {tide_time} ({tide_timezone})'
+                  f'on: {date} ({day_of_week}) at {tide_time} ({tide_timezone})'
         log.info(f"message = {message}")
-        while not sent:
+
+        try:
             r = requests.post(self.config['DEFAULT']['Webhook'],
                               json={'text': message})
-            cnt += 1
-            if not (r.status_code == 200 and r.reason == 'OK'):
-                log.debug(f"HTTP POST failed: {r.status_code} {r.reason}")
-                if cnt > 10:
-                    log.debug(f"failed {cnt} times, quitting")
-                    break
-                time.sleep(min(300, 2**cnt))
-            else:
-                log.debug(f"HTTP POST successful: {r.status_code} {r.reason}")
-                sent = True
+
+            if r.status_code == 403 and r.text == 'invalid_token':
+                log.error(f"Invalid token, please check your slack webhook url")
+                exit(-1)
+        except (requests.exceptions.ConnectionError, requests.exceptions.RetryError) as e:
+            raise e
 
 
 @click.command()
@@ -78,9 +77,9 @@ class Notification:
 @click.option('-p', '--port-id', multiple=True, help='port-ids to monitor')
 @click.option('-t', '--low-threshold', type=float, default=0.5,
               help='send notification when tide is lower than this')
-def main(config_file, port_id, threshold):
+def main(config_file, port_id, low_threshold):
     n = Notification(config_file)
-    r = n.query_low(port_id, threshold)
+    r = n.query_low(port_id, low_threshold)
     log.debug(f"{len(r)} record(s) found")
     for record in r:
         d = record[0]
@@ -90,6 +89,7 @@ def main(config_file, port_id, threshold):
         tide_timezone = record[4]
         height = record[5]
         n.send_msg(d, port_id, tide_type, tide_time, tide_timezone, height)
+    log.debug(f"(re)try attempts: {n.send_msg.retry.statistics['attempt_number']}")
 
 
 if __name__ == '__main__':
