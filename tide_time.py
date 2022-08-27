@@ -1,3 +1,6 @@
+import functools
+import multiprocessing
+
 from bs4 import BeautifulSoup
 import urllib
 import http
@@ -14,6 +17,7 @@ import logging
 import random
 import configparser
 import time
+from multiprocessing import Pool, cpu_count
 
 
 class Tidal:
@@ -148,7 +152,7 @@ class Tidal:
             raise ine
         return tide_record_list
 
-    def write(self, port_id):
+    def write(self, port_id, wait_interval):
         try:
             area_id = self.get_region(port_id)
             tide_list = self.parse_record(area_id, port_id)
@@ -162,6 +166,7 @@ class Tidal:
                 self.insert(record)
             self.con.commit()
             self.logging.info(f"{len(tide_list)} tide records for {self._port_id_2_location_name[port_id]} saved.")
+            time.sleep(wait_interval)
             return True
         except (urllib.error.HTTPError, http.client.IncompleteRead) as e:
             msg = f"parsing record for {port_id} tried {self.parse_record.retry.statistics['attempt_number']} " \
@@ -180,26 +185,40 @@ class Tidal:
             time.sleep(wait_interval)
         self.logging.info(f"{count}/{len(self.get_all_port_ids())} saved.")
 
+    def write_pool(self, id_list, wait_sec, num_proc=cpu_count()):
+        func = functools.partial(self.write, wait_interval=wait_sec)
+        with Pool(processes=num_proc) as pool:
+            it = pool.imap_unordered(func, id_list)
+
+            for x in it:
+                print('\t', x)
 
 @click.command()
 @click.option('-c', '--config-file', default='config.cfg',
               help='path to config file')
 @click.option('-p', '--port-id', multiple=True,
               help='port-ids to scrape, if not specified all available ports will be scraped.')
+@click.option('-n', '--num-workers', type=int, default=cpu_count(),
+              help=f'num of concurrent workers, default {cpu_count()}')
 @click.option("-l", "--log-level", type=LogLevel(), default=logging.INFO)
-def main(config_file, port_id, log_level):
+def main(config_file: str, port_id: str, num_workers: int, log_level: LogLevel):
     logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%d-%m-%Y:%H:%M:%S', level=log_level)
 
     t = Tidal(config_file, logging)
-    if port_id:
-        for pid in port_id:
-            if pid not in t.get_all_port_ids():
-                logging.error(f"{pid} is not a valid port id!")
-                exit(1)
-            t.write(pid)
-    else:
-        t.write_all()
+    if not port_id:
+        port_id = t.get_all_port_ids()
+
+    t.write_pool(port_id, num_workers)
+
+    # if port_id:
+    #     for pid in port_id:
+    #         if pid not in t.get_all_port_ids():
+    #             logging.error(f"{pid} is not a valid port id!")
+    #             exit(1)
+    #         t.write(pid)
+    # else:
+    #     t.write_all()
     t.close()
 
 
