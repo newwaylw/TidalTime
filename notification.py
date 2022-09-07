@@ -3,7 +3,6 @@ import sqlite3
 from datetime import datetime
 import logging as log
 import requests
-import time
 import click
 from tenacity import retry
 from tenacity import stop_after_attempt, wait_exponential
