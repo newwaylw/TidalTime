@@ -84,7 +84,6 @@ def create_location_table_if_not_exist(db_connection, location_table_name):
     cursor.execute(sql)
     db_connection.commit()
 
-
 def drop_table(db_connection, table_name: str):
     sql = f"DROP TABLE {table_name};"
     cursor = db_connection.cursor()
@@ -105,7 +104,6 @@ def insert(db_connection, table_name, tide_record: TideRecord):
                                     tide_record.timezone,
                                     tide_height))
     db_connection.commit()
-
 
 # retry 5 times in case of bad network connection
 # https://github.com/jd/tenacity/issues/147 doesn't work with multiprocessing pool
@@ -166,13 +164,14 @@ def parse_record(region_id, port_id, port_name):
               help='port-ids to scrape, if not specified all available ports will be scraped.')
 @click.option('-n', '--num-workers', type=int, default=cpu_count(),
               help=f'num of concurrent workers, default {cpu_count()}')
+
 # @click.option('-s', '--sleep', type=int, default=0, help="sleep this many seconds between each location each worker")
 def main(config_file: str, port_id: str, num_workers: int):
+
     config = read_config(config_file)
     conn = get_db_connection(config)
     create_tide_table_if_not_exist(conn, config.get('DEFAULT', 'Tide_table'))
     create_location_table_if_not_exist(conn, config.get('DEFAULT', 'Location_table'))
-    # interval = config.getint('DEFAULT', 'Interval')
     port_id_2_detail_map = get_tide_location_detail_to_map(conn)
 
     # if port_id is not set, fetch all available port_ids from db
