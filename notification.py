@@ -1,9 +1,9 @@
-import configparser
 import sqlite3
 from datetime import datetime
 import logging as log
 import requests
 import click
+import json
 from tenacity import retry
 from tenacity import stop_after_attempt, wait_exponential
 
@@ -12,18 +12,15 @@ log.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(li
 
 
 class Notification:
-    TIDE_TABLE = 'tidal'
-    LOCATION_TABLE = 'location'
-
     def __init__(self, config_file):
-        self.config = configparser.ConfigParser()
-        self.config.read(config_file)
-        self.con = sqlite3.connect(self.config['DEFAULT']['Database'])
+        with open(config_file) as f:
+            self.config = json.load(f)
+        self.con = sqlite3.connect(self.config['database'])
         self.cursor = self.con.cursor()
         self.port_id_2_name_map = {item[0]: item[1] for item in self.__load_locations__()}
 
     def __load_locations__(self):
-        sql = 'SELECT port_id, name FROM ' + Notification.LOCATION_TABLE
+        sql = 'SELECT port_id, name FROM ' + self.config['location_table']
         self.cursor.execute(sql)
         return self.cursor.fetchall()
 
@@ -38,7 +35,7 @@ class Notification:
               'tide_time, ' \
               'tide_timezone, ' \
               'height ' \
-              f"FROM {Notification.TIDE_TABLE} WHERE date > \'{today}\' " \
+              f"FROM {self.config['tide_table']} WHERE date > \'{today}\' " \
               f"AND tide_type = 'Low' " \
               f"AND height <= {threshold} "
         if not port_id_list:
@@ -60,7 +57,7 @@ class Notification:
         log.info(f"message = {message}")
 
         try:
-            r = requests.post(self.config['DEFAULT']['Webhook'],
+            r = requests.post(self.config['webhook'],
                               json={'text': message})
 
             if r.status_code == 403 and r.text == 'invalid_token':
@@ -71,8 +68,7 @@ class Notification:
 
 
 @click.command()
-@click.option('-c', '--config-file', default='config.cfg',
-              help='path to config file')
+@click.option('-c', '--config-file', default='config.json', help='config file location')
 @click.option('-p', '--port-id', multiple=True, help='port-ids to monitor')
 @click.option('-t', '--low-threshold', type=float, default=0.5,
               help='send notification when tide is lower than this')
