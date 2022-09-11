@@ -11,6 +11,7 @@ import logging
 import random
 from time import sleep
 import json
+import csv
 from multiprocessing import Pool, cpu_count
 
 logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
@@ -44,28 +45,60 @@ def get_tide_location_detail_to_map(db_connection) -> dict[str, tuple[str, int]]
 
 
 def create_tide_table_if_not_exist(db_connection):
-    sql = 'CREATE TABLE IF NOT EXISTS ' + config['tide_table'] + ' (' \
-          'date TEXT,' + \
-          'port_id TEXT,' + \
-          'tide_type TEXT,' + \
-          'tide_time TEXT,' + \
-          'tide_timezone TEXT,' + \
-          'height REAL,' + \
-          'UNIQUE (date, port_id, tide_time) ON CONFLICT REPLACE )'
+    check_table_sql = "SELECT count(*) FROM sqlite_master " \
+                      f"WHERE type='table' AND name='{config['tide_table']}' "
+
     cursor = db_connection.cursor()
-    cursor.execute(sql)
-    db_connection.commit()
+    cursor.execute(check_table_sql)
+    exists = cursor.fetchone()[0]
+
+    if not exists:
+        logging.info(f"{config['database']}: '{config['tide_table']}' table not found, creating..")
+        sql = 'CREATE TABLE ' + config['tide_table'] + ' (' \
+              'date TEXT,' + \
+              'port_id TEXT,' + \
+              'tide_type TEXT,' + \
+              'tide_time TEXT,' + \
+              'tide_timezone TEXT,' + \
+              'height REAL,' + \
+              'UNIQUE (date, port_id, tide_time) ON CONFLICT REPLACE )'
+        cursor = db_connection.cursor()
+        cursor.execute(sql)
+        db_connection.commit()
 
 
-def create_location_table_if_not_exist(db_connection):
-    sql = 'CREATE TABLE IF NOT EXISTS ' + config['location_table'] + ' (' \
+def fill_location_table_if_not_exist(db_connection):
+    check_table_sql = "SELECT count(*) FROM sqlite_master " \
+                      f"WHERE type='table' AND name='{config['location_table']}' "
+
+    create_table_sql = 'CREATE TABLE ' + config['location_table'] + ' (' \
            'port_id TEXT UNIQUE,' + \
            'region_id INTEGER,' + \
            'name TEXT )'
 
     cursor = db_connection.cursor()
-    cursor.execute(sql)
-    db_connection.commit()
+    cursor.execute(check_table_sql)
+    exists = cursor.fetchone()[0]
+
+    if not exists:
+        logging.info(f"{config['database']}: '{config['location_table']}' table not found, populating..")
+        cursor.execute(create_table_sql)
+        db_connection.commit()
+
+        insert_sql = f"INSERT INTO {config['location_table']} " \
+                     f"(port_id, region_id, name) " \
+                     f"VALUES(?,?,?) "
+
+        with open(config['location_file'], 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            # ignore header
+            next(reader)
+            num = 0
+            for pid, region_id, name in reader:
+                cursor.execute(insert_sql, (pid, region_id, name))
+                num += cursor.rowcount
+        db_connection.commit()
+        logging.debug(f"total {num} locations added")
 
 
 def drop_table(db_connection, table_name: str):
@@ -154,8 +187,8 @@ def parse_record(region_id, port_id, port_name):
               help=f'num of concurrent workers, default {cpu_count()}')
 def main(port_id: str, num_workers: int):
     conn = get_db_connection()
+    fill_location_table_if_not_exist(conn)
     create_tide_table_if_not_exist(conn)
-    create_location_table_if_not_exist(conn)
     port_id_2_detail_map = get_tide_location_detail_to_map(conn)
 
     # if port_id is not set, fetch all available port_ids from db

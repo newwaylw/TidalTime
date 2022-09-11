@@ -1,9 +1,10 @@
 {
   "url": "https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/",
-  "webhook": "https://hooks.slack.com/services/XXXXXXXXXXX",
+  "webhook": "https://hooks.slack.com/services/xxxxxxxxxx",
   "database": "tidal.db",
   "tide_table": "tidal",
   "location_table": "location",
+  "location_file": "locations.csv",
   "max_retry" : 3,
   "user_agents": [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15",
