@@ -57,7 +57,7 @@ class Notification:
         log.info(f"message = {message}")
 
         try:
-            r = requests.post(self.config['webhook'],
+            r = requests.post(self.config['slack_webhook'],
                               json={'text': message})
 
             if r.status_code == 403 and r.text == 'invalid_token':
