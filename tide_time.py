@@ -129,6 +129,7 @@ def insert(db_connection, tide_record: TideRecord):
 
 
 def parse_record(region_id, port_id, port_name):
+    logging.info(f'scraping tide prediction for {port_name}')
     location_code = str(region_id) + '/' + port_id
     logging.debug(f'scraping location: {location_code}')
     url = config['url'] + location_code
@@ -187,7 +188,6 @@ def parse_record(region_id, port_id, port_name):
 
 
 @click.command()
-
 @click.option('-p', '--port-id', multiple=True,
               help='port-ids to scrape, if not specified all available ports will be scraped.')
 @click.option('-n', '--num-workers', type=int, default=cpu_count(),
@@ -197,7 +197,6 @@ def main(port_id: str, num_workers: int):
     fill_location_table_if_not_exist(conn)
     create_tide_table_if_not_exist(conn)
     port_id_2_detail_map = get_tide_location_detail_to_map(conn)
-
 
     # if port_id is not set, fetch all available port_ids from db
     if not port_id:
