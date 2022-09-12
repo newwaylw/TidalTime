@@ -12,22 +12,26 @@ import random
 from time import sleep
 import json
 import csv
+from pathlib import Path
 from multiprocessing import Pool, cpu_count
 
 logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                     datefmt='%d-%m-%Y:%H:%M:%S', level=logging.DEBUG)
 
 
-def read_config(json_config: str):
+def read_config(config_file: Path):
     try:
-        with open(json_config) as f:
+        with config_file.open('r') as f:
             return json.load(f)
     except IOError as e:
-        logging.error(f"config file {json_config} not found!")
+        logging.error(f"config file {config_file} not found!")
         raise e
 
 
-config = read_config("config.json")
+# load config.json, node that we need to locate the directory
+# if the script is run elsewhere
+p = Path(__file__).with_name('config.json')
+config = read_config(p)
 
 
 def get_db_connection():
@@ -89,7 +93,8 @@ def fill_location_table_if_not_exist(db_connection):
                      f"(port_id, region_id, name) " \
                      f"VALUES(?,?,?) "
 
-        with open(config['location_file'], 'r') as csvfile:
+        p = Path(__file__).with_name(config['location_file'])
+        with p.open('r') as csvfile:
             reader = csv.reader(csvfile)
             # ignore header
             next(reader)
@@ -125,6 +130,7 @@ def insert(db_connection, tide_record: TideRecord):
 
 def parse_record(region_id, port_id, port_name):
     location_code = str(region_id) + '/' + port_id
+    logging.debug(f'scraping location: {location_code}')
     url = config['url'] + location_code
     current_year = datetime.now().year
     current_month = datetime.now().month
@@ -181,6 +187,7 @@ def parse_record(region_id, port_id, port_name):
 
 
 @click.command()
+
 @click.option('-p', '--port-id', multiple=True,
               help='port-ids to scrape, if not specified all available ports will be scraped.')
 @click.option('-n', '--num-workers', type=int, default=cpu_count(),
@@ -190,6 +197,7 @@ def main(port_id: str, num_workers: int):
     fill_location_table_if_not_exist(conn)
     create_tide_table_if_not_exist(conn)
     port_id_2_detail_map = get_tide_location_detail_to_map(conn)
+
 
     # if port_id is not set, fetch all available port_ids from db
     if not port_id:
