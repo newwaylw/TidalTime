@@ -84,7 +84,7 @@ def main(config_file, port_id, low_threshold):
         tide_timezone = record[4]
         height = record[5]
         n.send_msg(d, port_id, tide_type, tide_time, tide_timezone, height)
-    log.debug(f"(re)try attempts: {n.send_msg.retry.statistics['attempt_number']}")
+    # log.debug(f"(re)try attempts: {n.send_msg.retry.statistics['attempt_number']}")
 
 
 if __name__ == '__main__':
