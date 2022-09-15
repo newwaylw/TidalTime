@@ -129,9 +129,8 @@ def insert(db_connection, tide_record: TideRecord):
 
 
 def parse_record(region_id, port_id, port_name):
-    logging.info(f'scraping tide prediction for {port_name}')
+    logging.info(f'scraping tide prediction for {port_name}, (port id={port_id})')
     location_code = str(region_id) + '/' + port_id
-    logging.debug(f'scraping location: {location_code}')
     url = config['url'] + location_code
     current_year = datetime.now().year
     current_month = datetime.now().month
