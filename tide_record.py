@@ -18,8 +18,7 @@ class TideRecord:
         return self.data
 
     def add_record(self, type=str, time=str, height=float):
-        Tide = namedtuple("Tide", "type time height")
-        self.data.append(Tide(type, time, height))
+        self.data.append((type, time, height))
 
     def __key(self):
         return self.record_datetime, self.timezone, self.port_id
