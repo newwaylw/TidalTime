@@ -1,3 +1,5 @@
+import multiprocessing
+
 from bs4 import BeautifulSoup
 import urllib
 import http
@@ -129,7 +131,7 @@ def insert(db_connection, tide_record: TideRecord):
 
 
 def parse_record(region_id, port_id, port_name):
-    logging.info(f'scraping tide prediction for {port_name}, (port id={port_id})')
+    logging.info(f'[{multiprocessing.current_process().name}] scraping tide prediction for {port_name}, (port id={port_id})')
     location_code = str(region_id) + '/' + port_id
     url = config['url'] + location_code
     current_year = datetime.now().year
@@ -151,7 +153,7 @@ def parse_record(region_id, port_id, port_name):
             html = urllib.request.urlopen(req)
             soup = BeautifulSoup(html, features="html.parser")
             tables = soup.select("table.wr-c-tide-extremes")
-            logging.info(f"{len(tables)} days predictions found for {port_name} (port_id={port_id})")
+            logging.info(f"[{multiprocessing.current_process().name}] {len(tables)} days predictions found for {port_name} (port_id={port_id})")
             # each table contains tide prediction for 1 day starting 'today'
             for offset, table in enumerate(tables):
                 row_text = table.select_one("caption").text
@@ -171,13 +173,13 @@ def parse_record(region_id, port_id, port_name):
                 daily_tide_record_list.append(t_record)
 
         except urllib.error.HTTPError as e:
-            logging.error(f"{url} not found")
+            logging.error(f"[{multiprocessing.current_process()}] {url} not found")
             failed = True
             retry += 1
             sleep(retry**2)
             continue
         except http.client.IncompleteRead as ine:
-            logging.error(str(ine))
+            logging.error(f"[{multiprocessing.current_process().name}] {str(ine)}")
             failed = True
             retry += 1
             sleep(retry**2)
