@@ -63,9 +63,5 @@ class AutoFileOpener(BaseFileOpener):
         **kwargs: Any,
     ) -> TextIO:
         if path.suffix == ".gz":
-            return GzipFileOpener().open(
-                path, mode, encoding=encoding, **kwargs
-            )
-        return RegularFileOpener().open(
-            path, mode, encoding=encoding, **kwargs
-        )
+            return GzipFileOpener().open(path, mode, encoding=encoding, **kwargs)
+        return RegularFileOpener().open(path, mode, encoding=encoding, **kwargs)
