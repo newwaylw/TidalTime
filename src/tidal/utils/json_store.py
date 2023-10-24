@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Iterable, Iterator, Optional, Type, TypeVar
 
-from tidal.utils.file_utils import AutoFileOpener
+from tidal.utils.file_utils import AutoFileOpener, openTextMode
 from tidal.utils.serialization import AbstractSerializer, JSONSerializer
 
 T = TypeVar("T")
@@ -12,16 +12,26 @@ class JSONStore:
         self.serializer = JSONSerializer()
         self.file_opener = AutoFileOpener()
 
-    def save(self, data: T, path: Path, encoding: str = "utf-8") -> None:
+    def save(
+        self,
+        data: T,
+        path: Path,
+        mode: openTextMode = "w",
+        encoding: str = "utf-8",
+    ) -> None:
         data_str = self.serializer.serialize(data)
-        with self.file_opener.open(path, "w", encoding=encoding) as fileobj:
+        with self.file_opener.open(path, mode, encoding=encoding) as fileobj:
             fileobj.write(data_str)
 
     def save_lines(
-        self, stream: Iterable[T], path: Path, encoding: str = "utf-8"
+        self,
+        stream: Iterable[T],
+        path: Path,
+        mode: openTextMode = "w",
+        encoding: str = "utf-8",
     ) -> int:
         count = 0
-        with self.file_opener.open(path, "w", encoding=encoding) as fileobj:
+        with self.file_opener.open(path, mode, encoding=encoding) as fileobj:
             for data in stream:
                 fileobj.write(self.serializer.serialize(data))
                 fileobj.write("\n")

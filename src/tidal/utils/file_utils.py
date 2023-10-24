@@ -5,8 +5,8 @@ from typing import Any, Optional, TextIO
 
 from typing_extensions import Literal, TypeAlias
 
-_openTextMode: TypeAlias = Literal["r", "a", "w", "x"]
-_gzipOpenTextMode: TypeAlias = Literal["rt", "at", "wt", "xt"]
+openTextMode: TypeAlias = Literal["r", "a", "w", "x"]
+gzipOpenTextMode: TypeAlias = Literal["rt", "at", "wt", "xt"]
 
 
 class BaseFileOpener(ABC):
@@ -14,7 +14,7 @@ class BaseFileOpener(ABC):
     def open(
         self,
         path: Path,
-        mode: _openTextMode = "r",
+        mode: openTextMode = "r",
         encoding: str = "utf-8",
         **kwargs: Any,
     ) -> TextIO:
@@ -25,7 +25,7 @@ class RegularFileOpener(BaseFileOpener):
     def open(
         self,
         path: Path,
-        mode: _openTextMode = "r",
+        mode: openTextMode = "r",
         encoding: str = "utf-8",
         **kwargs: Any,
     ) -> TextIO:
@@ -36,11 +36,11 @@ class GzipFileOpener(BaseFileOpener):
     def open(
         self,
         path: Path,
-        mode: _openTextMode = "r",
+        mode: openTextMode = "r",
         encoding: str = "utf-8",
         **kwargs: Any,
     ) -> TextIO:
-        gzip_mode = Optional[_gzipOpenTextMode] = None
+        gzip_mode: Optional[gzipOpenTextMode] = None
         if mode == "r":
             gzip_mode = "rt"
         if mode == "w":
@@ -58,10 +58,14 @@ class AutoFileOpener(BaseFileOpener):
     def open(
         self,
         path: Path,
-        mode: _openTextMode = "r",
+        mode: openTextMode = "r",
         encoding: str = "utf-8",
         **kwargs: Any,
     ) -> TextIO:
         if path.suffix == ".gz":
-            return GzipFileOpener().open(path, mode, encoding=encoding, **kwargs)
-        return RegularFileOpener().open(path, mode, encoding=encoding, **kwargs)
+            return GzipFileOpener().open(
+                path, mode, encoding=encoding, **kwargs
+            )
+        return RegularFileOpener().open(
+            path, mode, encoding=encoding, **kwargs
+        )
