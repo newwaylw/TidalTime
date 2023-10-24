@@ -1,5 +1,4 @@
 import functools
-import multiprocessing
 
 from bs4 import BeautifulSoup
 import urllib
@@ -10,7 +9,6 @@ from urllib.request import urlopen
 import urllib.request
 import sqlite3
 import click
-from click_loglevel import LogLevel
 from datetime import datetime
 from tide_record import TideRecord
 import logging

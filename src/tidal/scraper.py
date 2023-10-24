@@ -5,20 +5,21 @@ import random
 import re
 import urllib
 import urllib.request
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, NewType, Optional, Tuple
 
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from tidal.tide import DailyTideRecord, Tide, TideLocation, TideType
 from tidal.constant import USER_AGENT_LIST
-
+from tidal.tide_dto import DailyTideRecord, Tide, TideLocation, TideType
 
 logger = logging.getLogger(__name__)
 
+URL = NewType("URL", str)
+
 
 class BBCTideScraper:
-    def __init__(self, url: str):
+    def __init__(self, url: URL):
         self.url = url
 
     @retry(
@@ -44,11 +45,12 @@ class BBCTideScraper:
             tables = soup.select(table_tag)
 
             if len(tables) == 0:
-                raise ValueError(f"Unable to parse bbc tide table {table_tag}")
+                raise ValueError(
+                    f"Unable to parse bbc tide table {table_tag},"
+                    f"please check if {self.url} layout changed."
+                )
 
-            logging.info(
-                f"{len(tables)} days predictions found for {location}"
-            )
+            logging.info(f"{len(tables)} days predictions found for {location}")
 
             # TODO: using system's date may cause problem due to time zones?
             today = dt.datetime.utcnow()
@@ -57,9 +59,10 @@ class BBCTideScraper:
             # each table contains tide prediction for 1 day starting 'today'
             for day_offset, table in enumerate(tables):
                 row_text = table.select_one("caption").text
+                logging.debug(f"{row_text}")
+
                 types = [
-                    [td.text for td in row.find_all("th")]
-                    for row in table.select("tr")
+                    [td.text for td in row.find_all("th")] for row in table.select("tr")
                 ]
                 data = [
                     [td.text for td in row.find_all("td")]
@@ -91,13 +94,13 @@ class BBCTideScraper:
                     )
                     tides.append(tide)
 
-                multiday_records.append(
-                    DailyTideRecord(location=location, tides=tides)
-                )
+                multiday_records.append(DailyTideRecord(location=location, tides=tides))
             return location, multiday_records
 
         except urllib.error.HTTPError as e:
-            logging.error(f"{target_url} not found")
+            logging.error(
+                f"{target_url} not found, please check if the area/port id is correct"
+            )
             return location, None
         except http.client.IncompleteRead as ine:
             logging.error(str(ine))
@@ -105,12 +108,3 @@ class BBCTideScraper:
         except ValueError as ve:
             logging.error(str(ve))
             return location, None
-
-
-# if __name__ == "__main__":
-#     scrapper = BBCTideScraper(
-#         "https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/"
-#     )
-#     location = TideLocation(name="Ramsgate", area_id=AreaID("9"), port_id=PortID("102"))
-#     # json_store = JSONStore()
-#     for record in scrapper.download_tidal_info(location):
