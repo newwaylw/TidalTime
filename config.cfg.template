@@ -1,0 +1,8 @@
+[DEFAULT]
+BASE_URL = https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/
+TIDE_LOCATION_FILE = locations.jsonl.gz
+# sqlite table location
+DATABASE_NAME = tidal.db
+DATABASE_TIDE_TABLE_NAME = tidal
+# for sending slack message
+WEBHOOK = https://hooks.slack.com/services/xxx
