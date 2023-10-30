@@ -1,0 +1,531 @@
+port_id,region_id,name
+1,10,St. Mary's
+102,9,Ramsgate
+102a,9,Broadstairs
+103,9,Margate
+104,9,Herne Bay
+105,9,Whitstable Approaches
+106,9,Grovehurst Jetty
+108,9,Sheerness
+108a,9,Bee Ness
+108c,9,Darnett Ness
+109,9,Chatham (Lock Approaches)
+109a,9,Upnor
+109b,9,Rochester (Strood Pier)
+109c,9,Wouldham
+109d,9,New Hythe
+109e,9,Allington Lock
+11,10,Looe
+110,1,Southend-On-Sea
+110a,1,Coryton
+111,2,Tilbury
+111a,2,Gravesend
+111b,2,Erith
+112,2,North Woolwich
+113,2,London Bridge (Tower Pier)
+113a,2,Chelsea Bridge
+114,2,Albert Bridge
+115,2,Hammersmith Bridge
+115a,2,Kew Bridge
+116,2,Richmond Lock
+116a,2,Shivering Sand
+117,2,S.E. Long Sand
+12,10,Whitsand Bay
+121,2,Whitaker Beacon
+121a,2,Holliwell Point
+122,1,Burnham-On-Crouch
+122a,1,North Fambridge
+122b,1,Hullbridge
+123,1,Bradwell Waterside
+123a,1,Osea Island
+124,1,West Mersea
+126,1,Brightlingsea
+128,1,Clacton-On-Sea
+129,1,Walton-On-The-Naze
+129a,1,Bramble Creek
+130,1,Sunk Head
+131,1,Harwich
+132,1,Mistley
+133,1,Ipswich
+133a,1,Felixstowe Pier
+134,1,Woodbridge Haven
+134a,1,Woodbridge
+135,1,Bawdsey
+136,1,Orford Haven Bar
+136a,1,Orford Quay
+136b,1,Slaughden Quay
+136c,1,Iken Cliffs
+137,1,Orford Ness
+139,1,Aldeburgh
+139a,1,Minsmere Sluice
+14,10,Plymouth (Devonport)
+140,1,Southwold
+141,1,Lowestoft
+142,1,Great Yarmouth (Gorleston-On-Sea)
+142a,1,Great Yarmouth (Britannia Pier)
+143,1,Caister-On-Sea
+144,1,Winterton-On-Sea
+14a,10,Saltash
+14b,10,Cargreen
+14c,10,Cotehele Quay
+14e,10,Jupiter Point
+14f,10,St Germans
+15,10,Turnchapel
+154,1,Cromer
+157a,1,Wells
+15a,10,Bovisand Pier
+1603,10,Braye
+1603a,10,Maseline Pier
+1604,10,St Peter Port
+1605,10,St Helier
+1606,10,St Catherine Bay
+1606a,10,Bouley Bay
+1607,10,Les Ecrehou
+1608,10,Les Minquiers
+161,1,Hunstanton
+161a,1,West Stones
+162,1,King's Lynn
+163,1,Outer Westmark Knock
+164,1,Wisbech Cut
+165,1,Tabs Head
+166,3,Boston
+167,3,Skegness
+168,3,Inner Dowsing Light
+17,10,River Yealm Entrance
+171,3,Spurn Head
+171a,3,Bull Sand Fort
+171b,3,Sunk Dredged Channel
+172,3,Grimsby
+172a,3,Humber Sea Terminal
+173,3,Immingham
+174,3,Hull (King George Dock)
+174a,3,Hull (Alexandra Dock)
+175,3,Hull (Albert Dock)
+176,3,Humber Bridge
+176a,3,Brough
+177,3,Burton Stather
+177a,3,Flixborough Wharf
+179,3,Blacktoft
+180,3,Goole
+181,3,Bridlington
+182,3,Filey Bay
+183,3,Scarborough
+184,4,Whitby
+185,4,River Tees Entrance
+186,4,Middlesbrough (Dock Entrance)
+187,4,Tees (Newport) Bridge
+188,4,Hartlepool
+189,4,Seaham
+190,4,Sunderland
+2,10,Penzance (Newlyn)
+20,10,Salcombe
+202,4,River Tyne (North Shields)
+203,4,Newcastle-Upon-Tyne
+204,4,Blyth
+205,4,Coquet Island
+206,4,Amble
+207,4,North Sunderland (Northumberland)
+208,4,Holy Island
+209,4,Berwick
+21,10,Start Point
+221,7,Eyemouth
+222,7,Dunbar
+223,7,Fidra
+225,7,Leith
+226,7,Granton
+227,7,Rosyth
+228,7,Grangemouth
+229,7,Kincardine
+229a,7,Alloa
+229b,7,Stirling
+23,10,Dartmouth
+230,7,Burntisland
+231,7,Kirkcaldy
+232,7,Methil
+233,7,Anstruther Easter
+235,7,River Tay Bar
+236,7,Dundee
+236a,7,Newburgh
+236b,7,Perth
+23a,10,Greenway Quay
+23b,10,Stoke Gabriel (Duncannon)
+23c,10,Totnes
+241,7,Arbroath
+242,7,Montrose
+243,7,Stonehaven
+244,7,Aberdeen
+245,7,Peterhead
+246,7,Fraserburgh
+247,7,Banff
+247a,7,Whitehills
+248,7,Buckie
+249,7,Lossiemouth
+25,10,Torquay
+250,7,Burghead
+253,7,Nairn
+254,7,Whiteness Head
+256,7,Inverness
+258,7,Cromarty
+259,7,Invergordon
+26,10,Teignmouth (Approaches)
+261,7,Portmahomack
+262,7,Meikle Ferry
+264,7,Golspie
+265,7,Helmsdale
+267,7,Wick
+26a,10,Teignmouth (New Quay)
+26b,10,Exmouth (Approaches)
+27,10,Exmouth Dock
+270,7,Muckle Skerry
+271,7,Burray Ness
+272,7,Deer Sound
+273,7,Kirkwall
+273a,7,Egilsay
+273b,7,Whitehall
+274,7,Loth
+275,7,Kettletoft Pier
+276,7,Rapness
+277,7,Pierowall
+279,7,Tingwall
+27a,10,Starcross
+28,10,Lyme Regis
+280,7,Stromness
+281,7,St. Mary's (Scapa Flow)
+282,7,Widewall Bay
+282a,7,Bur Wick
+285,7,Fair Isle
+285a,7,Sumburgh (Grutness Voe)
+287,7,Lerwick
+288,7,Dury Voe
+289,7,Out Skerries
+289a,7,Toft Pier
+29,10,Bridport (West Bay)
+290,7,Burra Voe (Yell Sound)
+290a,7,Mid Yell
+290b,7,Baltasound Pier
+291,7,Burra Firth
+292,7,Cullivoe
+293,7,Sullom Voe
+293a,7,Esha Ness (Hamna Voe)
+294,7,Hillswick
+294a,7,West Burra Firth
+295,7,Scalloway
+296,7,Bay Of Quendale
+296a,7,Foula
+297,7,Stroma
+297a,7,Gills Bay
+298,7,Scrabster
+299,7,Sule Skerry
+2a,10,Porthleven
+3,10,Lizard Point
+30,10,Chesil Beach
+300,7,Portnancon
+301,7,Kyle Of Durness
+304,7,Rona
+308,7,Stornoway
+309,7,Loch Shell
+31,10,Chesil Cove
+310,7,East Loch Tarbert (Outer Hebrides)
+310a,7,Leverburgh
+310b,7,Bays Loch
+311,7,Loch Maddy
+311a,7,Loch Carnan
+312,7,Loch Skipport
+313,7,Loch Boisdale
+314,7,Barra (North Bay)
+314a,7,Castle Bay
+316,7,Barra Head
+317,7,Shillay
+318,7,Balivanich
+318a,7,Scolpaig
+320,7,West Loch Tarbert
+321,7,Little Bernera
+321a,7,Carloway
+322,7,Hirta (Bagh A' Bhaile)
+323,7,Flannan Isles
+324,7,Rockall
+327,7,Loch Bervie
+328,7,Loch Laxford
+329,7,Badcall Bay
+33,10,Portland
+330,7,Loch Nedd
+332,7,Loch Inver
+333,7,Tanera Mor
+334,7,Ullapool
+336,7,Mellon Charles
+336a,7,Nato Jetty
+337,7,Gairloch
+338,7,Shieldaig
+338a,7,Applecross
+339,7,Plockton
+34,8,Lulworth Cove
+340,7,Loch A' Bhraige
+341,7,Broadford Bay
+342,7,Portree
+343,7,Loch Snizort (Uig Bay)
+344,7,Loch Dunvegan
+345,7,Loch Harport
+349,7,Kyle Of Lochalsh
+349a,7,Dornie Bridge
+34a,8,Mupe Bay
+35,8,Swanage
+351,7,Glenelg Bay
+352,7,Loch Hourn
+353,7,Inverie Bay
+353a,7,Mallaig
+353b,7,Loch Scresort
+354,7,Bay Of Laig
+354a,7,Galmisdale Pier
+355,7,Loch Moidart
+357,7,Gott Bay
+359,7,Carsaig Bay (Mull)
+36,8,Poole (Entrance)
+360,7,Iona
+361,7,Bunessan
+362,7,Sound of Ulva
+363,7,Salen
+364,7,Tobermory
+364a,7,Salen  Sound Of Mull
+365a,7,Craignure
+367,7,Corran
+368,7,Corpach
+36a,8,Poole Harbour
+36b,8,Pottery Pier
+36c,8,Wareham (River Frome)
+36d,8,Cleavel Point
+37,8,Bournemouth
+370,7,Port Appin
+370a,7,Barcaldine Pier
+370b,7,Loch Creran Head
+371,7,Dunstaffnage Bay
+371a,7,Connel
+371b,7,Ardchattan Point
+371c,7,Bonawe
+371d,7,Rubha Na Creige
+372,7,Oban
+373,7,Seil Sound
+374,7,Scalasaig
+375,7,Glengarrisdale Bay
+377,7,Rubh' A' Mhail
+378,7,Ardnave Point
+379,7,Orsay
+38,8,Christchurch (Entrance)
+380,7,Bruichladdich
+381,7,Port Ellen
+382,7,Port Askaig
+383,7,Craighouse
+383a,7,Loch Melfort
+384,7,Loch Beag
+387,7,Carsaig Bay
+389,7,Sound Of Gigha
+38a,8,Christchurch (Quay)
+38b,8,Christchurch (Tuckton)
+39,8,Hurst Point
+390,7,Machrihanish
+391,7,Southend  Kintyre
+393,7,Campbeltown
+393a,7,Carradale
+393b,7,Loch Ranza
+394,7,East Loch Tarbert (Loch Fyne)
+395,7,Inveraray
+396,7,Rubha A' Bhodaich
+396a,7,Tighnabruaich
+398,7,Millport
+399,7,Rothesay Bay
+399a,7,Wemyss Bay
+399b,7,Coulport
+399c,7,Lochgoilhead
+4,10,Coverack
+40,8,Lymington
+401,7,Arrochar
+402,7,Rosneath
+402a,7,Rhu Marina
+402b,7,Faslane
+402c,7,Garelochhead
+403,7,Helensburgh
+404,7,Greenock
+405,7,Port Glasgow
+406,7,Bowling
+406a,7,Clydebank (Rothesay Dock) **Neap (3)
+407,7,Glasgow
+408,7,Brodick Bay
+410,7,Ardrossan
+411,7,Irvine
+412,7,Troon
+413,7,Ayr
+414,7,Girvan
+414a,7,Stranraer
+415,7,Portpatrick
+419,5,Drummore
+42,8,Bucklers Hard
+420,7,Drummore
+420a,7,Port William
+421,7,Isle Of Whithorn
+422,7,Garlieston
+422a,7,Kirkcudbright Bay
+424,7,Hestan Island
+426,7,Annan Waterfoot
+43,8,Stansore Point
+432,5,Silloth
+433,5,Maryport
+434,5,Workington
+435,5,Whitehaven
+436,5,Tarn Point
+437,5,Duddon Bar
+439,5,Barrow (Ramsden Dock)
+439a,5,Roa Island
+439b,5,Haws Point
+439c,5,Halfway Shoal
+440b,5,Morecambe
+441,5,Heysham
+444,5,Fleetwood
+445,5,Blackpool
+446,5,Preston
+448,5,Formby
+45,8,Yarmouth
+451,5,Liverpool (Gladstone Dock)
+452,5,Seacombe (Alfred Dock)
+452a,5,Garston
+453,5,Eastham
+456,5,Widnes
+456a,5,Fiddler's Ferry
+46,8,Totland Bay
+461,5,Hilbre Island
+464,5,Mostyn Docks
+466,5,Peel
+467,5,Ramsey
+468,5,Douglas
+468a,5,Port St. Mary
+469,5,Calf Sound
+469a,5,Port Erin
+471,11,Llandudno
+471a,11,Conwy
+472,11,Beaumaris
+473,11,Menai Bridge
+474,11,Port Dinorwic
+475,11,Caernarfon
+475a,11,Fort Belan
+476,11,Trwyn Dinmor
+476a,11,Moelfre
+477,11,Amlwch
+477a,11,Cemaes Bay
+478,11,Holyhead
+479,11,Trearddur Bay
+479a,11,Porth Trecastell
+48,8,Freshwater Bay
+480,11,Llanddwyn Island
+480a,11,Trefor
+481,11,Porth Dinllaen
+481a,11,Porth Ysgaden
+482,11,Bardsey Island
+482a,11,Aberdaron
+482b,11,St Tudwal's Roads
+483,11,Pwllheli
+483a,11,Criccieth
+485,11,Barmouth
+486,11,Aberdovey
+487,11,Aberystwyth
+488,11,New Quay
+488a,11,Aberporth
+489,11,Port Cardigan
+490,11,Fishguard
+491,11,Porthgain
+492,11,Ramsey Sound
+492a,11,Solva
+492b,11,Little Haven
+493,11,Martin's Haven
+494,11,Skomer Island
+495,11,Dale Roads
+496,11,Milford Haven
+497,11,Neyland
+498,11,Black Tar
+4a,10,Helford River (Entrance)
+5,10,Falmouth
+501,11,Stackpole Quay
+502,11,Tenby
+504,11,Ferryside
+505,11,Burry Port
+508,11,Mumbles
+509,11,Swansea
+51,8,Ventnor
+510,11,Port Talbot
+512,11,Porthcawl
+513,11,Barry
+513a,11,Flat Holm
+513b,11,Steep Holm
+514,11,Cardiff
+515,11,Newport
+517,12,Sudbrook
+518,12,Beachley (Aust)
+519,12,Inward Rocks
+520,12,Narlwood Rocks
+521,12,White House
+522,12,Berkeley
+522a,12,Sharpness Dock
+522b,12,Wellhouse Rock
+523,12,Port of Bristol (Avonmouth)
+523a,12,Shirehampton
+523b,12,Sea Mills
+525,12,Clevedon
+525a,12,St Thomas's Head
+526,12,English And Welsh Grounds
+527,12,Weston-Super-Mare
+528,12,Burnham-On-Sea
+53,8,Sandown
+530,12,Hinkley Point
+531,12,Watchet
+532,12,Minehead
+533,12,Porlock Bay
+535,10,Ilfracombe
+536,10,Appledore
+537,10,Yelland Marsh
+538,10,Fremington
+539,10,Barnstaple
+53a,8,Foreland (Lifeboat Slip)
+54,8,Bembridge Harbour
+540,10,Bideford
+541,10,Clovelly
+542,10,Lundy
+544,10,Boscastle
+544a,12,Port Isaac
+545,10,Padstow
+545a,10,Wadebridge
+546,10,Newquay
+546a,10,Perranporth
+547,10,St Ives
+547a,10,Cape Cornwall
+58,8,Ryde
+60,8,Cowes
+60a,8,Folly Inn
+61,8,Calshot Castle
+62,8,Southampton
+63,8,Redbridge
+63a,8,Warsash
+63b,8,Bursledon
+64,8,Lee-On-The-Solent
+65,8,Portsmouth
+65a,8,Portsmouth (High Water Stand)
+66,8,Langstone Harbour
+68,8,Chichester Harbour (Entrance)
+68a,8,Northney
+68c,8,Itchenor
+69,8,Selsey Bill
+7,10,Mevagissey
+70,8,Nab Tower
+72,8,Pagham
+73,8,Bognor Regis
+74,8,Littlehampton
+75,8,Worthing
+7a,10,Par
+8,10,Fowey
+81,8,Shoreham
+82,8,Brighton Marina
+83,9,Newhaven
+84,9,Eastbourne
+84a,9,Sovereign Harbour
+85,9,Hastings
+87,9,Dungeness
+88,9,Folkestone
+89,9,Dover
+98,9,Deal
+99,9,Richborough
