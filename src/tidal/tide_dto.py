@@ -22,7 +22,7 @@ class TideLocation:
 @dataclass
 class Tide:
     type: TideType
-    utc_date_time: datetime
+    utc_datetime: datetime
     height: float
 
 

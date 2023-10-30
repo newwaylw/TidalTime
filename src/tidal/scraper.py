@@ -89,7 +89,7 @@ class BBCTideScraper:
                     ) - dt.timedelta(hours=time_offset)
                     tide = Tide(
                         TideType(tide_type),
-                        utc_date_time=new_datetime.replace(),
+                        utc_datetime=new_datetime.replace(),
                         height=float(height),
                     )
                     tides.append(tide)

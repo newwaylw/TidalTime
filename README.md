@@ -4,11 +4,16 @@ A simple script to:
 2. save to local db (sqlite)
 3. sent Slack notification. 
 
-`locations.jsonl` contains a table with available UK ports (full list below)
+A provided `locations.jsonl.gz` contains a table with available UK ports (full list below)
+
+Simply run `pip install`, and
+```commandline
+python collect_tides_info.py --help
+```
+
 
 Use in conjunction with cronjob
 to monitor daily. e.g.:
 ```
-0 4 * * * /home/wei/miniconda3/bin/python /home/wei/TidalTime/tide_time.py -p 104 -p 103
-0 21 * * 2,4 /home/wei/miniconda3/bin/python /home/wei/TidalTime/notification.py -c config.cfg -p 103 -p 104 -t 0.5
+0 4 * * * python /path/to/TidalTime/collect_tides_info.py -c config.cfg
 ```
