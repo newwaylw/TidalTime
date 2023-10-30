@@ -16,8 +16,7 @@ from tidal.utils.json_store import JSONStore
 def load_locations_map(tide_location_file: Path) -> Dict[PortID, TideLocation]:
     json_store = JSONStore()
     location_map = dict()
-    for location in json_store.load_lines(path=tide_location_file,
-                                          dtype=TideLocation):
+    for location in json_store.load_lines(path=tide_location_file, dtype=TideLocation):
         location_map[location.port_id] = location
     return location_map
 
@@ -90,7 +89,7 @@ def main(
         Path(config["DEFAULT"].get("DATABASE_NAME")),
         config["DEFAULT"].get("DATABASE_TIDE_TABLE_NAME"),
     )
-    tide_database.create_table()
+    tide_database.create_table(drop_existing=False)
 
     with Pool(processes=num_workers) as pool:
         error_locations = list()

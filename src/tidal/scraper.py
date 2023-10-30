@@ -78,10 +78,10 @@ class BBCTideScraper:
                     # this could happen when tides within a day crosses BST/GMT
                     if "BST" in time_str:
                         time_offset = 1
-                        time_str = re.sub(r"\s+BST", "", time_str)
+                        time_str = re.sub(r".*(\d\d:\d\d).+", r"\g<1>", time_str)
                     elif "GMT" in time_str:
                         time_offset = 0
-                        time_str = re.sub(r"\s+GMT", "", time_str)
+                        time_str = re.sub(r".*(\d\d:\d\d).+", r"\g<1>", time_str)
 
                     tide_time = dt.datetime.strptime(time_str, "%H:%M").time()
                     new_datetime = dt.datetime.combine(
