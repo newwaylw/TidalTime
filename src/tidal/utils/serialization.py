@@ -6,25 +6,15 @@ from serde.json import from_json, to_json
 T = TypeVar("T")
 
 
-class AbstractSerializer(abc.ABC):
-    @abc.abstractmethod
-    def serialize(self, data: T) -> str:
-        pass
+class JSONSerializer:
 
-    @abc.abstractmethod
-    def deserialize(self, data: str, dtype: Type[T]) -> T:
-        pass
-
-
-class JSONSerializer(AbstractSerializer):
-    def __init__(self):
-        pass
-
+    @classmethod
     def serialize(
-        self,
+        cls,
         data: T,
     ) -> str:
         return to_json(data)
 
-    def deserialize(self, data: str, dtype: Type[T]) -> T:
+    @classmethod
+    def deserialize(cls, data: str, dtype: Type[T]) -> T:
         return from_json(dtype, data)

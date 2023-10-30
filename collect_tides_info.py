@@ -8,14 +8,14 @@ import click
 import tqdm
 
 from tidal.db import TidalDatabase
+from tidal.utils.store import JSONStore
 from tidal.scraper import URL, BBCTideScraper
 from tidal.tide_dto import PortID, TideLocation
-from tidal.utils.json_store import JSONStore
 
 
 def load_locations_map(tide_location_file: Path) -> Dict[PortID, TideLocation]:
-    json_store = JSONStore()
     location_map = dict()
+    json_store = JSONStore()
     for location in json_store.load_lines(path=tide_location_file, dtype=TideLocation):
         location_map[location.port_id] = location
     return location_map

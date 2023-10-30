@@ -1,15 +1,14 @@
 from pathlib import Path
-from typing import Iterable, Iterator, Optional, Type, TypeVar
+from typing import Iterable, Iterator, Type, TypeVar
 
 from tidal.utils.file_utils import AutoFileOpener, openTextMode
-from tidal.utils.serialization import AbstractSerializer, JSONSerializer
+from tidal.utils.serialization import JSONSerializer
 
 T = TypeVar("T")
 
 
 class JSONStore:
     def __init__(self):
-        self.serializer = JSONSerializer()
         self.file_opener = AutoFileOpener()
 
     def save(
@@ -19,7 +18,7 @@ class JSONStore:
         mode: openTextMode = "w",
         encoding: str = "utf-8",
     ) -> None:
-        data_str = self.serializer.serialize(data)
+        data_str = JSONSerializer.serialize(data)
         with self.file_opener.open(path, mode, encoding=encoding) as fileobj:
             fileobj.write(data_str)
 
@@ -33,7 +32,7 @@ class JSONStore:
         count = 0
         with self.file_opener.open(path, mode, encoding=encoding) as fileobj:
             for data in stream:
-                fileobj.write(self.serializer.serialize(data))
+                fileobj.write(JSONSerializer.serialize(data))
                 fileobj.write("\n")
                 count += 1
             return count
@@ -41,7 +40,7 @@ class JSONStore:
     def load(self, path: Path, dtype: Type[T], encoding: str = "utf-8") -> T:
         with self.file_opener.open(path, "r", encoding=encoding) as fileobj:
             data = fileobj.read()
-        return self.serializer.deserialize(data, dtype)
+        return JSONSerializer.deserialize(data, dtype)
 
     def load_lines(
         self, path: Path, dtype: Type[T], encoding: str = "utf-8"
@@ -50,4 +49,4 @@ class JSONStore:
         with self.file_opener.open(path, "r", encoding=encoding) as fileobj:
             for line in fileobj:
                 data = line.rstrip("\n")
-                yield self.serializer.deserialize(data, dtype)
+                yield JSONSerializer.deserialize(data, dtype)
