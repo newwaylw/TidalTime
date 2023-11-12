@@ -7,7 +7,6 @@ T = TypeVar("T")
 
 
 class JSONSerializer:
-
     @classmethod
     def serialize(
         cls,
