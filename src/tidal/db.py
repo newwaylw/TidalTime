@@ -90,8 +90,8 @@ class TidalDatabase:
             f"SELECT utc_datetime, tide_type, height "
             f"FROM {self.table_name} "
             f"WHERE port_id = {port_id} AND "
-            f"unixepoch(utc_datetime) >= {start_date.timestamp()} AND "
-            f"unixepoch(utc_datetime) <={end_date.timestamp()}"
+            f"utc_datetime >= '{start_date.isoformat()}' AND "
+            f"utc_datetime <= '{end_date.isoformat()}'"
         )
         self.cursor.execute(sql)
         for record in self.cursor.fetchall():
