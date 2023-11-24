@@ -98,7 +98,7 @@ class BBCTideScraper:
 
             return location, multiday_records
 
-        except urllib.error.HTTPError as e:
+        except urllib.error.HTTPError:
             logging.error(
                 f"{target_url} not found, please check if the area/port id is correct"
             )

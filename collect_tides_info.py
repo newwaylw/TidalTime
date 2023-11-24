@@ -15,8 +15,7 @@ from tidal.utils.store import JSONStore
 
 def load_locations_map(tide_location_file: Path) -> Dict[PortID, TideLocation]:
     location_map = dict()
-    json_store = JSONStore()
-    for location in json_store.load_lines(path=tide_location_file, dtype=TideLocation):
+    for location in JSONStore.load_lines(path=tide_location_file, dtype=TideLocation):
         location_map[location.port_id] = location
     return location_map
 

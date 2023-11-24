@@ -1,4 +1,3 @@
-import abc
 from typing import Type, TypeVar
 
 from serde.json import from_json, to_json
