@@ -23,7 +23,7 @@ class BBCTideScraper:
         self.url = url
 
     @retry(
-        stop=stop_after_attempt(1),
+        stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=2, min=2, max=32),
     )
     def download_tidal_info(
@@ -75,37 +75,49 @@ class BBCTideScraper:
                 time_offset = 1 if "BST" in time else 0
                 tides = list()
                 for tide_type, (time_str, height) in zip(high_low, data):
-                    # this could happen when tides within a day crosses BST/GMT
-                    if "BST" in time_str:
-                        time_offset = 1
-                        time_str = re.sub(r".*(\d\d:\d\d).+", r"\g<1>", time_str)
-                    elif "GMT" in time_str:
-                        time_offset = 0
-                        time_str = re.sub(r".*(\d\d:\d\d).+", r"\g<1>", time_str)
-
-                    tide_time = dt.datetime.strptime(time_str, "%H:%M").time()
-                    new_datetime = dt.datetime.combine(
-                        today + dt.timedelta(days=day_offset), tide_time
-                    ) - dt.timedelta(hours=time_offset)
-                    tide = Tide(
-                        TideType(tide_type),
-                        utc_datetime=new_datetime.replace(),
-                        height=float(height),
-                    )
-                    tides.append(tide)
+                    # Handle BST/GMT time conversion
+                    current_time_offset = time_offset
+                    clean_time_str = time_str.strip()
+                    
+                    if "BST" in clean_time_str:
+                        current_time_offset = 1
+                        clean_time_str = re.sub(r".*(\d\d:\d\d).+", r"\g<1>", clean_time_str)
+                    elif "GMT" in clean_time_str:
+                        current_time_offset = 0
+                        clean_time_str = re.sub(r".*(\d\d:\d\d).+", r"\g<1>", clean_time_str)
+                    
+                    try:
+                        tide_time = dt.datetime.strptime(clean_time_str, "%H:%M").time()
+                        new_datetime = dt.datetime.combine(
+                            today + dt.timedelta(days=day_offset), tide_time
+                        ) - dt.timedelta(hours=current_time_offset)
+                        tide = Tide(
+                            TideType(tide_type),
+                            utc_datetime=new_datetime,
+                            height=float(height),
+                        )
+                        tides.append(tide)
+                    except ValueError as e:
+                        logging.error(f"Failed to parse time: {clean_time_str}, error: {str(e)}")
+                        continue
 
                 multiday_records.append(DailyTideRecord(location=location, tides=tides))
 
             return location, multiday_records
 
-        except urllib.error.HTTPError:
+        except urllib.error.HTTPError as he:
             logging.error(
-                f"{target_url} not found, please check if the area/port id is correct"
+                f"HTTP error {he.code} for {target_url}, please check if the area/port id is correct"
             )
             return location, None
         except http.client.IncompleteRead as ine:
-            logging.error(str(ine))
+            logging.error(f"Incomplete read error: {str(ine)}")
             return location, None
         except ValueError as ve:
-            logging.error(str(ve))
+            logging.error(f"Value error: {str(ve)}")
             return location, None
+        except Exception as e:
+            logging.error(f"Unexpected error: {str(e)}")
+            return location, None
+
+   

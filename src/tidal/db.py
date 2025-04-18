@@ -72,10 +72,12 @@ class TidalDatabase:
         sql = (
             f"SELECT location, area_id "
             f"FROM {self.table_name} "
-            f"WHERE port_id = {port_id} LIMIT 1"
+            f"WHERE port_id = ? LIMIT 1"
         )
-        self.cursor.execute(sql)
+        self.cursor.execute(sql, (port_id,))
         result = self.cursor.fetchone()
+        if not result:
+            raise ValueError(f"No location found for port_id {port_id}")
         return TideLocation(
             name=result[0], area_id=AreaID(result[1]), port_id=PortID(port_id)
         )
@@ -89,11 +91,11 @@ class TidalDatabase:
         sql = (
             f"SELECT utc_datetime, tide_type, height "
             f"FROM {self.table_name} "
-            f"WHERE port_id = {port_id} AND "
-            f"utc_datetime >= '{start_date.isoformat()}' AND "
-            f"utc_datetime <= '{end_date.isoformat()}'"
+            f"WHERE port_id = ? AND "
+            f"utc_datetime >= ? AND "
+            f"utc_datetime <= ?"
         )
-        self.cursor.execute(sql)
+        self.cursor.execute(sql, (port_id, start_date.isoformat(), end_date.isoformat()))
         for record in self.cursor.fetchall():
             yield Tide(
                 type=TideType(record[1]),
