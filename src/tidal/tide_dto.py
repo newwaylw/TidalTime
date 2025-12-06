@@ -14,6 +14,7 @@ class TideType(Enum):
 
 @dataclass
 class TideLocation:
+    region_name: str
     name: str
     area_id: AreaID
     port_id: PortID
