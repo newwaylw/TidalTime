@@ -106,7 +106,7 @@ def main(
         logging.info(f"{num_success}/{len(locations_to_download)} locations collected.")
         if len(error_locations) > 0:
             for i, location in enumerate(error_locations):
-                logging.info(f"Failed location {i+1}: {location}")
+                logging.error(f"Failed location {i+1}: {location}")
 
     tide_database.close()
 
