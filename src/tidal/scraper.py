@@ -1,14 +1,13 @@
+import asyncio
 import datetime as dt
-import http
 import logging
 import random
 import re
-import urllib
-import urllib.request
-from typing import Iterable, List, NewType, Optional, Tuple
+from typing import List, NewType, Optional, Tuple
 
+import aiohttp
 from bs4 import BeautifulSoup
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from tidal.constant import USER_AGENT_LIST
 from tidal.tide_dto import DailyTideRecord, Tide, TideLocation, TideType
@@ -16,6 +15,9 @@ from tidal.tide_dto import DailyTideRecord, Tide, TideLocation, TideType
 logger = logging.getLogger(__name__)
 
 URL = NewType("URL", str)
+
+# Pre-compiled once at module level
+_TIME_RE = re.compile(r".*(\d{2}:\d{2}).*")
 
 
 class BBCTideScraper:
@@ -25,41 +27,49 @@ class BBCTideScraper:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=2, min=2, max=32),
+        retry=retry_if_exception_type(aiohttp.ClientError),
+        reraise=True,
     )
-    def download_tidal_info(
-        self, location: TideLocation
-    ) -> Tuple[TideLocation, Optional[Iterable[DailyTideRecord]]]:
+    async def _fetch(self, session: aiohttp.ClientSession, url: str) -> str:
+        headers = {"User-Agent": random.choice(USER_AGENT_LIST)}
+        async with session.get(url, headers=headers) as response:
+            response.raise_for_status()
+            return await response.text()
+
+    async def download_tidal_info(
+        self,
+        session: aiohttp.ClientSession,
+        location: TideLocation,
+        today: dt.datetime,
+    ) -> Tuple[TideLocation, Optional[List[DailyTideRecord]]]:
         target_url = self.url + location.area_id + "/" + location.port_id
         try:
-            req = urllib.request.Request(
-                target_url,
-                data=None,
-                headers={
-                    "Content-Type": "application/json; charset=utf-8",
-                    "User-Agent": f"{random.choice(USER_AGENT_LIST)}",
-                },
-            )
-            html = urllib.request.urlopen(req)
-            soup = BeautifulSoup(html, features="html.parser")
+            html = await self._fetch(session, target_url)
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"HTTP error {e.status} for {target_url}")
+            return location, None
+        except aiohttp.ClientError as e:
+            logger.error(f"Network error for {target_url}: {e}")
+            return location, None
+
+        try:
+            soup = BeautifulSoup(html, features="lxml")
             table_tag = "table.wr-c-tide-extremes"
             tables = soup.select(table_tag)
 
-            if len(tables) == 0:
+            if not tables:
                 raise ValueError(
-                    f"Unable to parse bbc tide table {table_tag},"
+                    f"Unable to parse bbc tide table {table_tag}, "
                     f"please check if {self.url} layout changed."
                 )
 
-            logging.info(f"{len(tables)} days predictions found for {location}")
+            logger.info(f"{len(tables)} days predictions found for {location}")
 
-            # TODO: using system's date may cause problem due to time zones?
-            today = dt.datetime.utcnow()
-            multiday_records: List[DailyTideRecord] = list()
+            multiday_records: List[DailyTideRecord] = []
 
-            # each table contains tide prediction for 1 day starting 'today'
             for day_offset, table in enumerate(tables):
                 row_text = table.select_one("caption").text
-                logging.debug(f"{row_text}")
+                logger.debug(row_text)
 
                 types = [
                     [td.text for td in row.find_all("th")] for row in table.select("tr")
@@ -68,56 +78,47 @@ class BBCTideScraper:
                     [td.text for td in row.find_all("td")]
                     for row in table.select("tr")[1:]
                 ]
-                _, time, height = types.pop(0)
+                _, time_header, _ = types.pop(0)
                 high_low = [x[0] for x in types]
-                logging.debug(f"{len(high_low)} {row_text}")
-                # convert BST to UTC
-                time_offset = 1 if "BST" in time else 0
-                tides = list()
+
+                time_offset = 1 if "BST" in time_header else 0
+                tides = []
+
                 for tide_type, (time_str, height) in zip(high_low, data):
-                    # Handle BST/GMT time conversion
                     current_time_offset = time_offset
                     clean_time_str = time_str.strip()
-                    
+
                     if "BST" in clean_time_str:
                         current_time_offset = 1
-                        clean_time_str = re.sub(r".*(\d\d:\d\d).+", r"\g<1>", clean_time_str)
                     elif "GMT" in clean_time_str:
                         current_time_offset = 0
-                        clean_time_str = re.sub(r".*(\d\d:\d\d).+", r"\g<1>", clean_time_str)
-                    
+
+                    match = _TIME_RE.match(clean_time_str)
+                    if not match:
+                        logger.error(f"Failed to parse time: {clean_time_str}")
+                        continue
+
                     try:
-                        tide_time = dt.datetime.strptime(clean_time_str, "%H:%M").time()
+                        tide_time = dt.datetime.strptime(match.group(1), "%H:%M").time()
                         new_datetime = dt.datetime.combine(
                             today + dt.timedelta(days=day_offset), tide_time
                         ) - dt.timedelta(hours=current_time_offset)
-                        tide = Tide(
+                        tides.append(Tide(
                             TideType(tide_type),
                             utc_datetime=new_datetime,
                             height=float(height),
-                        )
-                        tides.append(tide)
+                        ))
                     except ValueError as e:
-                        logging.error(f"Failed to parse time: {clean_time_str}, error: {str(e)}")
+                        logger.error(f"Failed to parse time: {clean_time_str}, error: {e}")
                         continue
 
                 multiday_records.append(DailyTideRecord(location=location, tides=tides))
 
             return location, multiday_records
 
-        except urllib.error.HTTPError as he:
-            logging.error(
-                f"HTTP error {he.code} for {target_url}, please check if the area/port id is correct"
-            )
-            return location, None
-        except http.client.IncompleteRead as ine:
-            logging.error(f"Incomplete read error: {str(ine)}")
-            return location, None
         except ValueError as ve:
-            logging.error(f"Value error: {str(ve)}")
+            logger.error(f"Value error for {target_url}: {ve}")
             return location, None
         except Exception as e:
-            logging.error(f"Unexpected error: {str(e)}")
+            logger.error(f"Unexpected error for {target_url}: {e}")
             return location, None
-
-   

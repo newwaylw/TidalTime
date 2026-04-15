@@ -1,11 +1,13 @@
+import asyncio
 import configparser
+import datetime as dt
 import logging
-from multiprocessing import Pool, cpu_count
 from pathlib import Path
 from typing import Dict, List
 
+import aiohttp
 import click
-import tqdm
+import tqdm.asyncio
 
 from tidal.db import TidalDatabase
 from tidal.scraper import URL, BBCTideScraper
@@ -14,10 +16,36 @@ from tidal.utils.store import JSONStore
 
 
 def load_locations_map(tide_location_file: Path) -> Dict[PortID, TideLocation]:
-    location_map = dict()
-    for location in JSONStore.load_lines(path=tide_location_file, dtype=TideLocation):
-        location_map[location.port_id] = location
-    return location_map
+    return {
+        location.port_id: location
+        for location in JSONStore.load_lines(path=tide_location_file, dtype=TideLocation)
+    }
+
+
+async def run(
+    locations: List[TideLocation],
+    scraper: BBCTideScraper,
+    tide_database: TidalDatabase,
+    num_workers: int,
+) -> List[TideLocation]:
+    semaphore = asyncio.Semaphore(num_workers)
+    today = dt.datetime.utcnow()
+
+    async def download(session: aiohttp.ClientSession, location: TideLocation):
+        async with semaphore:
+            return await scraper.download_tidal_info(session, location, today)
+
+    error_locations = []
+    async with aiohttp.ClientSession() as session:
+        tasks = [download(session, loc) for loc in locations]
+        for coro in tqdm.asyncio.tqdm.as_completed(tasks, total=len(tasks)):
+            location, records = await coro
+            if not records:
+                error_locations.append(location)
+            else:
+                tide_database.insert(records)
+
+    return error_locations
 
 
 @click.command()
@@ -39,8 +67,8 @@ def load_locations_map(tide_location_file: Path) -> Dict[PortID, TideLocation]:
     "-n",
     "--num-workers",
     type=int,
-    default=cpu_count(),
-    help=f"num of concurrent workers, default {cpu_count()}",
+    default=10,
+    help="number of concurrent requests, default 10",
 )
 @click.option("-v", "--verbose", is_flag=True, help="increase output verbosity")
 def main(
@@ -49,17 +77,13 @@ def main(
     num_workers: int,
     verbose: bool,
 ):
-    config = configparser.ConfigParser()
-    if verbose:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
-
     logging.basicConfig(
         format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
         datefmt="%d-%m-%Y:%H:%M:%S",
-        level=log_level,
+        level=logging.DEBUG if verbose else logging.INFO,
     )
+
+    config = configparser.ConfigParser()
     try:
         with open(config_file) as f:
             config.read_file(f)
@@ -72,9 +96,9 @@ def main(
     )
 
     if not port_ids:
-        locations_to_download = tide_location_map.values()
+        locations_to_download = list(tide_location_map.values())
     else:
-        locations_to_download = list()
+        locations_to_download = []
         for port_id in port_ids:
             if port_id in tide_location_map:
                 locations_to_download.append(tide_location_map[port_id])
@@ -83,30 +107,21 @@ def main(
                     f"port_id {port_id} does not exist in the location file! Skipping"
                 )
 
-    scrapper = BBCTideScraper(URL(config["DEFAULT"].get("BASE_URL")))
+    scraper = BBCTideScraper(URL(config["DEFAULT"].get("BASE_URL")))
     tide_database = TidalDatabase(
         Path(config["DEFAULT"].get("DATABASE_NAME")),
         config["DEFAULT"].get("DATABASE_TIDE_TABLE_NAME"),
     )
     tide_database.create_table(drop_existing=False)
 
-    with Pool(processes=num_workers) as pool:
-        error_locations = list()
-        for location, records in tqdm.tqdm(
-            pool.imap(scrapper.download_tidal_info, locations_to_download),
-            total=len(locations_to_download),
-            position=0,
-            leave=True,
-        ):
-            if not records:
-                error_locations.append(location)
-            else:
-                tide_database.insert(records)
-        num_success = len(locations_to_download) - len(error_locations)
-        logging.info(f"{num_success}/{len(locations_to_download)} locations collected.")
-        if len(error_locations) > 0:
-            for i, location in enumerate(error_locations):
-                logging.error(f"Failed location {i+1}: {location}")
+    error_locations = asyncio.run(
+        run(locations_to_download, scraper, tide_database, num_workers)
+    )
+
+    num_success = len(locations_to_download) - len(error_locations)
+    logging.info(f"{num_success}/{len(locations_to_download)} locations collected.")
+    for i, location in enumerate(error_locations):
+        logging.error(f"Failed location {i + 1}: {location}")
 
     tide_database.close()
 

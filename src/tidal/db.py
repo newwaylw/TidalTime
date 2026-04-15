@@ -2,7 +2,7 @@ import datetime
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, List, Tuple
 
 from tidal.tide_dto import (AreaID, DailyTideRecord, PortID, Tide,
                             TideLocation, TideType)
@@ -35,9 +35,7 @@ class TidalDatabase:
 
         self.cursor.execute(sql)
         if self.cursor.rowcount <= 0:
-            logger.debug(
-                f'Table "{self.table_name}" already existed. Skipping creation'
-            )
+            logger.debug(f'Table "{self.table_name}" already existed. Skipping creation')
         else:
             logger.info(f'Table "{self.table_name}" created.')
         self.con.commit()
@@ -51,21 +49,21 @@ class TidalDatabase:
         insert_sql = (
             f"INSERT INTO {self.table_name} "
             f"(location, area_id, port_id, utc_datetime, tide_type, height) "
-            f"VALUES(?,?,?,?,?,?) "
+            f"VALUES(?,?,?,?,?,?)"
         )
-        for daily_tides in tide_records:
-            for tide in daily_tides.tides:
-                self.cursor.execute(
-                    insert_sql,
-                    (
-                        daily_tides.location.name,
-                        daily_tides.location.area_id,
-                        daily_tides.location.port_id,
-                        tide.utc_datetime.isoformat(),
-                        tide.type.value,
-                        tide.height,
-                    ),
-                )
+        rows: List[Tuple] = [
+            (
+                daily_tides.location.name,
+                daily_tides.location.area_id,
+                daily_tides.location.port_id,
+                tide.utc_datetime.isoformat(),
+                tide.type.value,
+                tide.height,
+            )
+            for daily_tides in tide_records
+            for tide in daily_tides.tides
+        ]
+        self.cursor.executemany(insert_sql, rows)
         self.con.commit()
 
     def get_location_by_port_id(self, port_id: PortID) -> TideLocation:
