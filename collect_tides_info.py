@@ -29,7 +29,7 @@ async def run(
     num_workers: int,
 ) -> List[TideLocation]:
     semaphore = asyncio.Semaphore(num_workers)
-    today = dt.datetime.utcnow()
+    today = dt.datetime.now(dt.timezone.utc)
 
     async def download(session: aiohttp.ClientSession, location: TideLocation):
         async with semaphore:

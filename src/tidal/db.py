@@ -10,6 +10,13 @@ from tidal.tide_dto import (AreaID, DailyTideRecord, PortID, Tide,
 logger = logging.getLogger(__name__)
 
 
+def _as_naive_utc(d: datetime.datetime) -> datetime.datetime:
+    """Strip tzinfo after converting to UTC, for consistent naive-UTC DB storage."""
+    if d.tzinfo is not None:
+        d = d.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return d
+
+
 class TidalDatabase:
     def __init__(self, database_file: Path, table_name: str):
         self.con = sqlite3.connect(database_file)
@@ -24,6 +31,7 @@ class TidalDatabase:
             "CREATE TABLE IF NOT EXISTS "
             + self.table_name
             + " ("
+            + "region_name TEXT,"
             + "location TEXT,"
             + "area_id TEXT,"
             + "port_id TEXT,"
@@ -48,11 +56,12 @@ class TidalDatabase:
     def insert(self, tide_records: Iterable[DailyTideRecord]) -> None:
         insert_sql = (
             f"INSERT INTO {self.table_name} "
-            f"(location, area_id, port_id, utc_datetime, tide_type, height) "
-            f"VALUES(?,?,?,?,?,?)"
+            f"(region_name, location, area_id, port_id, utc_datetime, tide_type, height) "
+            f"VALUES(?,?,?,?,?,?,?)"
         )
         rows: List[Tuple] = [
             (
+                daily_tides.location.region_name,
                 daily_tides.location.name,
                 daily_tides.location.area_id,
                 daily_tides.location.port_id,
@@ -68,7 +77,7 @@ class TidalDatabase:
 
     def get_location_by_port_id(self, port_id: PortID) -> TideLocation:
         sql = (
-            f"SELECT location, area_id "
+            f"SELECT region_name, location, area_id "
             f"FROM {self.table_name} "
             f"WHERE port_id = ? LIMIT 1"
         )
@@ -77,7 +86,7 @@ class TidalDatabase:
         if not result:
             raise ValueError(f"No location found for port_id {port_id}")
         return TideLocation(
-            name=result[0], area_id=AreaID(result[1]), port_id=PortID(port_id)
+            region_name=result[0], name=result[1], area_id=AreaID(result[2]), port_id=PortID(port_id)
         )
 
     def query_tide(
@@ -93,7 +102,7 @@ class TidalDatabase:
             f"utc_datetime >= ? AND "
             f"utc_datetime <= ?"
         )
-        self.cursor.execute(sql, (port_id, start_date.isoformat(), end_date.isoformat()))
+        self.cursor.execute(sql, (port_id, _as_naive_utc(start_date).isoformat(), _as_naive_utc(end_date).isoformat()))
         for record in self.cursor.fetchall():
             yield Tide(
                 type=TideType(record[1]),

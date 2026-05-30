@@ -73,8 +73,8 @@ def main(config_file, port_id, low_threshold, verbose):
     n_match = 0
     for tide in tide_database.query_tide(
         port_id=tide_location.port_id,
-        start_date=datetime.datetime.utcnow(),
-        end_date=datetime.datetime.utcnow() + datetime.timedelta(days=7),
+        start_date=datetime.datetime.now(datetime.timezone.utc),
+        end_date=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=7),
     ):
         if tide.type == TideType.LOW and tide.height <= low_threshold:
             n_match += 1
