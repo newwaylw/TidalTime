@@ -1,6 +1,7 @@
 import asyncio
 import configparser
 import datetime as dt
+import json
 import logging
 from pathlib import Path
 from typing import Dict, List
@@ -11,15 +12,40 @@ import tqdm.asyncio
 
 from tidal.db import TidalDatabase
 from tidal.scraper import URL, BBCTideScraper
-from tidal.tide_dto import PortID, TideLocation
-from tidal.utils.store import JSONStore
+from tidal.tide_dto import AreaID, PortID, TideLocation
 
 
 def load_locations_map(tide_location_file: Path) -> Dict[PortID, TideLocation]:
-    return {
-        location.port_id: location
-        for location in JSONStore.load_lines(path=tide_location_file, dtype=TideLocation)
-    }
+    """Load tide locations from the nested ``locations_raw.json`` schema.
+
+    The file is structured as ``countries`` -> optionally ``regions`` ->
+    ``locations``. Countries without regions carry ``locations`` directly. Each
+    location is keyed by its ``port_id`` (the location ``id``).
+    """
+    with open(tide_location_file) as f:
+        data = json.load(f)
+
+    def _areas(country: dict):
+        # A country either groups its locations under regions or lists them
+        # directly. Normalise both into (area_name, area_id, locations) tuples.
+        if "regions" in country:
+            for region in country["regions"]:
+                yield region["name"], region["id"], region.get("locations", [])
+        else:
+            yield country["name"], country["id"], country.get("locations", [])
+
+    locations_map: Dict[PortID, TideLocation] = {}
+    for country in data.get("countries", []):
+        for area_name, area_id, locations in _areas(country):
+            for location in locations:
+                port_id = PortID(location["id"])
+                locations_map[port_id] = TideLocation(
+                    region_name=area_name,
+                    name=location["name"],
+                    area_id=AreaID(area_id),
+                    port_id=port_id,
+                )
+    return locations_map
 
 
 async def run(
@@ -29,7 +55,7 @@ async def run(
     num_workers: int,
 ) -> List[TideLocation]:
     semaphore = asyncio.Semaphore(num_workers)
-    today = dt.datetime.now(dt.timezone.utc)
+    today = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
 
     async def download(session: aiohttp.ClientSession, location: TideLocation):
         async with semaphore:
@@ -57,6 +83,13 @@ async def run(
     help="path to config file",
 )
 @click.option(
+    "-l",
+    "--tide-location-file",
+    type=Path,
+    default="locations_raw.json",
+    help="path to tide location file, default locations_raw.json",
+)
+@click.option(
     "-p",
     "--port-ids",
     multiple=True,
@@ -73,6 +106,7 @@ async def run(
 @click.option("-v", "--verbose", is_flag=True, help="increase output verbosity")
 def main(
     config_file: str,
+    tide_location_file: Path,
     port_ids: List[PortID],
     num_workers: int,
     verbose: bool,
@@ -91,9 +125,7 @@ def main(
         logging.error(f"config file {config_file} not found!")
         exit(-1)
 
-    tide_location_map = load_locations_map(
-        Path(config["DEFAULT"].get("TIDE_LOCATION_FILE"))
-    )
+    tide_location_map = load_locations_map(tide_location_file)
 
     if not port_ids:
         locations_to_download = list(tide_location_map.values())
