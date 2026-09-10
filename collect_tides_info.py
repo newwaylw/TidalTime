@@ -13,17 +13,24 @@ import tqdm.asyncio
 from tidal.db import TidalDatabase
 from tidal.scraper import URL, BBCTideScraper
 from tidal.tide_dto import AreaID, PortID, TideLocation
+from tidal.utils.slack import send_msg
 
-
-def load_locations_map(tide_location_file: Path) -> Dict[PortID, TideLocation]:
+def load_locations_map(config) -> Dict[PortID, TideLocation]:
     """Load tide locations from the nested ``locations_raw.json`` schema.
 
     The file is structured as ``countries`` -> optionally ``regions`` ->
     ``locations``. Countries without regions carry ``locations`` directly. Each
     location is keyed by its ``port_id`` (the location ``id``).
     """
-    with open(tide_location_file) as f:
-        data = json.load(f)
+    tide_location_file: Path = config["DEFAULT"]["TIDE_LOCATION_FILE"]
+    try:
+        with open(tide_location_file) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        msg = f"tide location file {tide_location_file} not found!"
+        logging.error(msg)
+        send_msg(config["DEFAULT"]["WEBHOOK"], msg)
+        exit(-1)
 
     def _areas(country: dict):
         # A country either groups its locations under regions or lists them
@@ -82,13 +89,13 @@ async def run(
     default="config.cfg",
     help="path to config file",
 )
-@click.option(
-    "-l",
-    "--tide-location-file",
-    type=Path,
-    default="locations_raw.json",
-    help="path to tide location file, default locations_raw.json",
-)
+# @click.option(
+#     "-l",
+#     "--tide-location-file",
+#     type=Path,
+#     default="locations_raw.json",
+#     help="path to tide location file, default locations_raw.json",
+# )
 @click.option(
     "-p",
     "--port-ids",
@@ -106,7 +113,6 @@ async def run(
 @click.option("-v", "--verbose", is_flag=True, help="increase output verbosity")
 def main(
     config_file: str,
-    tide_location_file: Path,
     port_ids: List[PortID],
     num_workers: int,
     verbose: bool,
@@ -122,10 +128,11 @@ def main(
         with open(config_file) as f:
             config.read_file(f)
     except IOError:
-        logging.error(f"config file {config_file} not found!")
+        msg = f"config file {config_file} not found!"
+        logging.error(msg)
         exit(-1)
 
-    tide_location_map = load_locations_map(tide_location_file)
+    tide_location_map = load_locations_map(config)
 
     if not port_ids:
         locations_to_download = list(tide_location_map.values())
