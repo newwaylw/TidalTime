@@ -13,7 +13,7 @@ from tidal.db import TidalDatabase
 from tidal.scraper import URL, BBCTideScraper
 from tidal.tide_dto import PortID, TideLocation
 from tidal.utils.store import JSONStore
-
+from tidal.utils.slack import send_msg
 
 def load_locations_map(tide_location_file: Path) -> Dict[PortID, TideLocation]:
     return {
@@ -89,6 +89,7 @@ def main(
             config.read_file(f)
     except IOError:
         logging.error(f"config file {config_file} not found!")
+        send_msg(f"config file {config_file} not found!")
         exit(-1)
 
     tide_location_map = load_locations_map(

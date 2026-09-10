@@ -9,29 +9,15 @@ import requests
 
 from tidal.db import TidalDatabase
 from tidal.tide_dto import Tide, TideLocation, TideType
+from tidal.utils.slack import send_msg
 
-
-def send_msg(url: str, tide_location: TideLocation, tide_info: Tide):
-    sent = False
-    cnt = 0
+def send_notification(url: str, tide_location: TideLocation, tide_info: Tide):
     message = (
         f'Spring {tide_info.type} tide {tide_info.height}m at "{tide_location.name}"'
         + f" at: {tide_info.utc_datetime} UTC "
     )
     logging.info(f"Sending message = {message}")
-
-    while not sent:
-        r = requests.post(url, json={"text": message})
-        cnt += 1
-        if not (r.status_code == 200 and r.reason == "OK"):
-            logging.debug(f"HTTP POST failed: {r.status_code} {r.reason}")
-            if cnt > 10:
-                logging.debug(f"failed {cnt} times, quitting")
-                break
-            time.sleep(min(300, 2**cnt))
-        else:
-            logging.debug(f"HTTP POST successful: {r.status_code} {r.reason}")
-            sent = True
+    send_msg(url, message)
 
 
 @click.command()
