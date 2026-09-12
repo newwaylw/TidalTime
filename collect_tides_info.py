@@ -76,6 +76,8 @@ async def run(
             if not records:
                 error_locations.append(location)
             else:
+                for record in records:
+                    logging.debug(f"records = {record}")
                 tide_database.insert(records)
 
     return error_locations
