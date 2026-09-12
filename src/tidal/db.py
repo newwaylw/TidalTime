@@ -72,8 +72,32 @@ class TidalDatabase:
             for daily_tides in tide_records
             for tide in daily_tides.tides
         ]
-        self.cursor.executemany(insert_sql, rows)
-        self.con.commit()
+        if not rows:
+            return
+
+        # Overwrite behaviour: fully replace each location's tides within the
+        # scraped window rather than relying on the per-timestamp UNIQUE
+        # constraint (which leaves stale rows behind when a predicted time
+        # shifts). For every port_id being written, delete existing rows in
+        # [min, max] of the incoming timestamps, then insert fresh. The whole
+        # thing runs in one transaction so a failure can't leave a gap.
+        windows: dict = {}
+        for _, _, _, port_id, iso_dt, _, _ in rows:
+            lo, hi = windows.get(port_id, (iso_dt, iso_dt))
+            windows[port_id] = (min(lo, iso_dt), max(hi, iso_dt))
+
+        delete_sql = (
+            f"DELETE FROM {self.table_name} "
+            f"WHERE port_id = ? AND utc_datetime >= ? AND utc_datetime <= ?"
+        )
+        try:
+            for port_id, (lo, hi) in windows.items():
+                self.cursor.execute(delete_sql, (port_id, lo, hi))
+            self.cursor.executemany(insert_sql, rows)
+            self.con.commit()
+        except sqlite3.Error:
+            self.con.rollback()
+            raise
 
     def get_location_by_port_id(self, port_id: PortID) -> TideLocation:
         sql = (
